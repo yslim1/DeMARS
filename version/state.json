@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "mode": "mutable",
+  "mode": "frozen",
   "versions": [
     {
       "version": "0.1.0",
