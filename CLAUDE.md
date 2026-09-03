@@ -10,6 +10,10 @@ De-average disordered crystals into Minimal Atomistic Representations (MARs).
 - `episodes/` — what earlier entries taught the program, keyed by the engine flag that calls each
   one up. `lesson` is what applies; `provenance` is the audit trail. See `episodes/README.md`.
 - `demars-core/docs/DEFECTS.md` — what every `D<n>` cited in the code and tests means.
+- `version/` — when protected code may change (`state.json.mode`), enforced by the hooks in
+  `.claude/settings.json`. See `version/README.md`.
+- `assets/` — `demars.yaml.example`, setup scripts, SLURM templates, the local ICSD indexer.
+- `reference/` — stored answers for `tools/demars_reference.py`'s install self-check.
 
 ## Version-controlled changes
 
@@ -85,10 +89,10 @@ asking follow-up questions. Fill in the defaults below and go.
    (charge / fidelity / connectivity / sqs / hull — connectivity and sqs are automatic, **hull is
    not**; report every `state`, and never read `vacuous` or `not_run` as a pass), the
    `E_above_hull` **with your reading of it** when the hull gate is `derived` (that gate leaves
-   `pass: null` unless a threshold is configured — a number, not a verdict), sibling ΔE if any, and the reviewer's verdict —
-   **quoting its `objections` verbatim when the verdict is `revise` or `escalate`**, since that is
-   where the loop used to go and the user decides instead. Plus anything the analyst escalated. Give
-   the run dir path.
+   `pass: null` unless a threshold is configured — a number, not a verdict), sibling ΔE if any, and
+   the reviewer's verdict — **quoting its `objections` verbatim when the verdict is `revise` or
+   `escalate`**, since that is where the loop used to go and the user decides instead. Plus anything
+   the analyst escalated. Give the run dir path.
 
 Deviate from the defaults only when the user states a different budget, output location, or
 calculator. If they say "screening" or "quick", drop to `--nr 12 --min-nm 1.0` and tell the
@@ -117,7 +121,7 @@ tools/py tools/demars_connectivity.py <struct> [--json] [--expect S=4]  # ⑤ ga
 tools/py tools/demars_hull.py <rep_final> --out <rundir>/_work/<tag>  # ④b hull (needs an MP key)
 tools/py tools/demars_record.py   <cif> --engine <rundir>/_work/r0/engine.json \
          --judgment <rundir>/judgment.json --out <rundir>   # ⑥ record (⑤ + SQS run themselves)
-icsd-query show|extract|chemsys|formula ...                          # local ICSD (241k entries)
+icsd-query show|extract|chemsys|formula ...                          # local ICSD (user-provided)
 ```
 
 ## Facts that bite

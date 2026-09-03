@@ -29,7 +29,7 @@ In Claude Code, `/setup` walks through everything below — env, `demars.yaml`, 
 index, and a verification pass (`assets/setup/`, scripts usable on their own). By hand:
 
 ```bash
-git clone https://github.com/yslim1/DeMARS_v2.git && cd DeMARS_v2
+git clone https://github.com/yslim1/DeMARS-deploy.git && cd DeMARS-deploy
 conda create -n demars python=3.12 && conda activate demars
 
 # GPU: install a CUDA-matched torch FIRST (see the SevenNet / PyTorch docs), then:
@@ -68,7 +68,7 @@ an interpreter with no `demars_core`.
 ```bash
 assets/setup/doctor.sh                # config, interpreter, GPU, models, ICSD, MP key, version
 tools/py tools/demars_reference.py    # runs bundled COD structures, compares to stored answers
-pytest                                # 409 tests, ~4 min -- RUN FROM THE REPO ROOT
+pytest                                # the whole suite -- RUN FROM THE REPO ROOT
 ```
 
 The reference check separates what is comparable from what is not: enumeration facts (supercell,
@@ -144,10 +144,10 @@ fixed set of centre elements and names the cations it never looked at.
 **`gates.hull` reports and does not judge, until you give it a line.** `hull.tol_eV_per_atom` in
 `demars.yaml` (or `--hull-tol`) is `null` by default, and then that gate carries `E_above_hull` with
 `pass: null` — a number for a human to read, not a verdict, and there is no default threshold to
-inherit. The two terms that would set one are system-dependent: the
-configurational entropy the 0 K hull omits (a MAR is an *ordered approximant* of an
-entropy-stabilised phase, so it sits above the hull legitimately) and the energy-scale error, which
-differs between the two hull modes. Measure your corpus, then set it.
+inherit. The two terms that would set one are system-dependent: the configurational entropy the
+0 K hull omits (a MAR is an *ordered approximant* of an entropy-stabilised phase, so it sits above
+the hull legitimately) and the energy-scale error, which differs between the two hull modes. Measure
+your corpus, then set it.
 
 The hull's **energy scale** is stamped in `gates.hull.corrections` — `mp2020` (default: MP's own
 hull scale, the one its published `energy_above_hull` is on; 75 of 79 Fe-Ti-O materials reproduce
@@ -262,6 +262,9 @@ not just the verdicts.
 | `demars-core/README.md` | the engine: Python API, CLI, MLIP backends, troubleshooting |
 | `tools/README.md` | the stage-①→⑥ file contracts the agents orchestrate |
 | `CLAUDE.md` | the trigger, the defaults, the facts that bite |
+| `version/README.md` | when protected code may change: the `frozen` / `mutable` modes, release tags, and the hooks in `.claude/settings.json` that check them |
+| `assets/` | `demars.yaml.example`, `setup/` (env, config, doctor), `slurm/` (job templates), `icsd_query/` (the local ICSD indexer and CLI) |
+| `reference/` | the stored answers `tools/demars_reference.py` checks a fresh install against |
 | `.claude/skills/mar-analyst/` | the methodology: `taxonomy.md` (mechanism classes A–F), `strategy.md`, `principles.md`, `tools.md` — **edit these to change how the analyst judges** |
 | `.claude/skills/mar-reviewer/` | what an adversarial review must attack — **edit this to change what it refuses to accept** |
 | `.claude/skills/mar-batch/` | the batch protocol — partitioning, the append-only ledger, resuming after an interruption; **use it for more than one structure** |
@@ -280,7 +283,7 @@ Python importer.
 
 Redistributed third-party code:
 
-- `demars_core/viewer/js/3Dmol-min.js` — 3Dmol.js, **BSD-3-Clause** (© 2014 University of Pittsburgh
-  and contributors), bundling GLmol, Three.js and jQuery. Notices:
-  `demars_core/viewer/PROVENANCE.txt`, license: `viewer/js/3Dmol-LICENSE.txt`.
+- `demars-core/demars_core/viewer/js/3Dmol-min.js` — 3Dmol.js, **BSD-3-Clause** (© 2014 University
+  of Pittsburgh and contributors), bundling GLmol, Three.js and jQuery. Notices:
+  `demars-core/demars_core/viewer/PROVENANCE.txt`, license: `…/viewer/js/3Dmol-LICENSE.txt`.
 - `demars-core/tests/fixtures/*.cif` — Crystallography Open Database, **CC0**.
