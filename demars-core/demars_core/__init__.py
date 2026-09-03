@@ -15,5 +15,5 @@ coordination machinery, and most callers only want `deaverage()`.
 from .api import deaverage
 from .record import MARRecord, write_custom_ensemble
 
-__version__ = '0.0.1.dev0'
+__version__ = '0.1.0'
 __all__ = ['deaverage', 'MARRecord', 'write_custom_ensemble', '__version__']

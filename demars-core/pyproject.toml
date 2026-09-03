@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "demars-core"
-version = "0.0.1.dev0"
+version = "0.1.0"
 description = "De-average a disordered crystal (partial occupancies / split sites) into a Minimal Atomistic Representation (MAR), from any CIF, with a pluggable universal-MLIP backend."
 readme = "README.md"
 requires-python = ">=3.10"

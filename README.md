@@ -43,8 +43,10 @@ never learns which potential it is talking to. SevenNet + torch-sim is the suppo
 Optional extras, both **off by default** because they build from source against a CUDA toolchain:
 `[oeq]` and `[cueq]` install SevenNet's fused-kernel backends for `compute.accelerator` in the config.
 
-**Distribution is this repository** (a clone, or its Zenodo archive) — not a standalone wheel. The
-methodology lives in `.claude/`, which a wheel does not carry.
+**Distribution is this repository, as a git clone** — not a standalone wheel, and not a source zip.
+The methodology lives in `.claude/`, which a wheel does not carry, and the version gate in
+`version/` verifies the checkout against its release tag before it lets the analyst run, so a
+download without `.git` can drive the engine but not the judgment layer.
 
 ### Configure `demars.yaml`
 

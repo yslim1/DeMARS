@@ -4,12 +4,18 @@
   "versions": [
     {
       "version": "0.1.0",
-      "release_tag": "v0.1.0-test",
+      "release_tag": "v0.1.0",
       "based_on": null,
       "changes": [
-        "Add tag-anchored version and frozen-state checks."
+        "First public release: deterministic engine (demars-core), stage tools, judgment layer (mar-analyst, mar-reviewer, mar-batch), episodes and defect ledger.",
+        "Tag-anchored version state with frozen/mutable modes enforced by the Claude Code hooks."
       ],
-      "known_limits": []
+      "known_limits": [
+        "gates.hull needs a Materials Project API key; without it the gate stays not_run (unchecked).",
+        "The ordered-sibling search needs a user-built local ICSD index (assets/icsd_query); no ICSD data ships.",
+        "hull.tol_eV_per_atom has no default, so gates.hull reports E_above_hull with pass: null until a threshold is configured.",
+        "The frozen-state check requires a git clone with the release tag; a source zip without .git cannot run the judgment layer."
+      ]
     }
   ]
 }
