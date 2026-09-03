@@ -143,25 +143,12 @@ permanently unchecked.
 centres a unit — not that the units are fine. Read `connectivity.not_examined` too: the gate covers a
 fixed set of centre elements and names the cations it never looked at.
 
-**`gates.hull` reports and does not judge, until you give it a line.** `hull.tol_eV_per_atom` in
-`demars.yaml` (or `--hull-tol`) is `null` by default, and then that gate carries `E_above_hull` with
-`pass: null` — a number for a human to read, not a verdict, and there is no default threshold to
-inherit. The two terms that would set one are system-dependent: the configurational entropy the
-0 K hull omits (a MAR is an *ordered approximant* of an entropy-stabilised phase, so it sits above
-the hull legitimately) and the energy-scale error, which differs between the two hull modes. Measure
-your corpus, then set it.
-
-The hull's **energy scale** is stamped in `gates.hull.corrections` — `mp2020` (default: MP's own
-hull scale, the one its published `energy_above_hull` is on; 75 of 79 Fe-Ti-O materials reproduce
-there and none on the raw scale) or `none` (raw PBE(+U), internally consistent but not MP's hull).
-The reference energies are recomputed at the MAR's own tier by default (`mode: self-consistent`), so
-the MLIP-vs-DFT offset cancels instead of loading onto the MAR — measured, that offset was most of
-what the cheaper `mp-direct` mode reported.
-
-MP applies a correction only where the element is present *as an anion*, and GGA+U only for oxides
-and fluorides of V/Cr/Mn/Fe/Co/Ni/W/Mo — so the offsets cancel in a hull decomposition unless it
-crosses that role boundary. A mixed-valence oxide does cross it, and the scales can then differ by
-~0.1 eV/atom and name different decomposition products.
+**`gates.hull` reports and does not judge, until you give it a line.** `hull.tol_eV_per_atom` is
+`null` by default and there is no threshold to inherit, so that gate carries `E_above_hull` with
+`pass: null` — a number for a human to read, not a verdict. A MAR is an *ordered approximant* of an
+entropy-stabilised phase, so it sits above the 0 K hull legitimately; measure your own corpus, then
+set the line. The energy scale is stamped in `gates.hull.corrections`, and which scale you are on
+matters — `tools/README.md` has it.
 
 **`review`** — `null` means **UNREVIEWED**, which is not reviewed-and-clean. A record with a null
 review must never be reported as confirmed. When present it is a ledger of every analyst→reviewer
@@ -177,11 +164,6 @@ representative is always DeMARS's own de-averaged structure.
 different frame of the same ensemble, with `frame_index` and `pick_reason`), or `custom-build` (a
 structure the analyst constructed, with `build_recipe`). `pick_unresolved` means a repick was
 requested and could not be resolved, so the record fell back to the frame the analyst rejected.
-
-`generation_recipe` carries what the build actually did, including `exclusion_merge` (the cutoffs, per
-element) and per-orbit `group_orbits[*].exclusion.mode`. On that last one: `merged: false` means *not
-clique-merged*, **not** "no exclusion" — `mode: pairwise` means the excluded pairs are enforced at
-decoration.
 
 ## Run many structures
 
