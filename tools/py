@@ -1,0 +1,36 @@
+#!/bin/bash
+# Run a DeMARS tool with the demars env's interpreter.
+#
+#   cd "${DEMARS_ROOT:-$PWD}" && tools/py tools/demars_engine.py <cif> --out <rundir> --final
+#
+# Never call a bare `python` from an agent: its shell is re-initialized from the profile on every
+# call, and a profile that initializes conda restores that conda's default env -- so `python` is
+# whatever the profile leaves behind, with no demars_core, however the session was launched, and an
+# activation of the agent's own is undone by the next call. This resolves the interpreter instead:
+#
+#   $DEMARS_PY  >  paths.python in the config  >  `python` on PATH (warned, almost certainly wrong)
+#
+# The config search mirrors tools/_icsd_env.py: $DEMARS_CONFIG, ./demars.yaml, <repo>/demars.yaml,
+# ~/.config/demars/demars.yaml. Keep the key `paths.python` -- it is the only place the env lives.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+py="${DEMARS_PY:-}"
+if [ -z "$py" ]; then
+    for cfg in "${DEMARS_CONFIG:-}" "$PWD/demars.yaml" "$ROOT/demars.yaml" \
+               "$HOME/.config/demars/demars.yaml"; do
+        [ -n "$cfg" ] && [ -f "$cfg" ] || continue
+        py="$(sed -n 's/^[[:space:]][[:space:]]*python:[[:space:]]*\([^#]*\).*/\1/p' "$cfg" \
+              | head -1 | tr -d "\"' " )"
+        [ -n "$py" ] && break
+    done
+fi
+
+if [ -z "$py" ]; then
+    echo "tools/py: no paths.python in the config and \$DEMARS_PY unset -- falling back to 'python'" \
+         "on PATH, which is unlikely to be the demars env." >&2
+    py=python
+fi
+
+exec "$py" "$@"

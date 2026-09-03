@@ -1,0 +1,529 @@
+{
+ "schema": "episodes-1.0",
+ "purpose": "Maturation episodes, keyed by the engine flag or situation that should call them up. An episode fires when its trigger appears in engine.json or in the analyst's own situation; the lesson is what applies. The entries under `provenance` are what the lesson was learned on -- they are the audit trail for the de-identified wording that ships in the skills, and are not needed to apply the lesson.",
+ "trigger_vocabulary": "Trigger names are the flags the engine already emits (engine.json), plus a few named situations the analyst reaches by judgment. Nothing here invents a new vocabulary.",
+ "triggers": {
+  "dummy_species": [
+   "E-dummy-species"
+  ],
+  "full_occ_clash": [
+   "E-superposition",
+   "E-coincident-images"
+  ],
+  "no_full_backbone": [
+   "E-no-backbone"
+  ],
+  "rigid_units": [
+   "E-rigid-polyanion",
+   "E-collapsed-ring",
+   "E-orientation-dof"
+  ],
+  "coordination_integrity_flag": [
+   "E-rigid-polyanion",
+   "E-collapsed-ring"
+  ],
+  "coupling_signal": [
+   "E-slaved-decoration"
+  ],
+  "h_restore": [
+   "E-unlocated-h",
+   "E-h-automation-boundary",
+   "E-h-restore-all-or-nothing"
+  ],
+  "broad_spread_flag": [
+   "E-collapsed-ring",
+   "E-slaved-decoration"
+  ],
+  "bracket_probes": [
+   "E-bracket-probe"
+  ],
+  "exclusion_merge": [
+   "E-quota-pooling"
+  ],
+  "couple_cut": [
+   "E-former-not-in-tables"
+  ],
+  "ordered_sibling": [
+   "E-sibling-never-adopt",
+   "E-sibling-composition-match",
+   "E-sibling-interrogation",
+   "E-sibling-narrow-chemsys"
+  ],
+  "cell_scatter": [
+   "E-no-backbone"
+  ],
+  "situation:custom_build": [
+   "E-ensemble-obligation",
+   "E-cell-length-cutoff",
+   "E-rigid-polyanion"
+  ],
+  "situation:single_config": [
+   "E-single-config-gate",
+   "E-supercell-decides"
+  ],
+  "situation:charge_imbalance": [
+   "E-valence-formula",
+   "E-charge-erases-disorder",
+   "E-h-restore-all-or-nothing"
+  ],
+  "situation:repaired_cif": [
+   "E-charge-needs-a-lever"
+  ],
+  "situation:molecular_ligands": [
+   "E-ligand-role-separation"
+  ]
+ },
+ "episodes": {
+  "E-bracket-probe": {
+   "lesson": "The dispersed and clustered bracket probes are diagnostics that bound the distribution, not members of it. They stay in the ensemble, but the representative is taken from the random draws only. Read each probe's margin instead of its rank: a few meV is noise, while tens of meV negative on the clustered probe is a signal that the material may genuinely order — a mechanism-class question, not a frame to ship.",
+   "artifact": "gate + deterministic code",
+   "shipped_as": [
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py:82",
+     "text": "ship_candidates() -- one definition of the eligible pool, called by all five selection sites"
+    },
+    {
+     "where": "demars-core/demars_core/_engine/mar_record.py:575",
+     "text": "sqs_gate() watchdog; bracket_probes keeps each margin as a diagnostic"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "67403",
+     "258159"
+    ],
+    "detail": "Three records shipped a probe while representative.source read engine-lowest; margins 2.8 / 4.1 / 0.8 meV/atom over the best random frame -- one clustered draw, two dispersed, so a clustered-only gate would have missed two. The structures were not wrong; the label concealed what they were. Closed 2026-08-24: `ship_candidates()` defines the eligible pool and all five selection sites consult it, `bracket_probes` keeps the margins as a diagnostic, and `gates.sqs` remains as a watchdog."
+   }
+  },
+  "E-unlocated-h": {
+   "lesson": "A formula declaring hydrogen with no hydrogen coordinates is an X-ray limitation, not a defective structure. Retain located protons, add only the missing ones, and proceed only when the formula deficit and the charge deficit agree -- that agreement is what confirms the imbalance really is unlocated hydrogen.",
+   "artifact": "deterministic code",
+   "shipped_as": [
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py:1501,1507,1519",
+     "text": "three acceptor models under h_restore.method: valence-driven completion, charge-compensating Bronsted (aliovalent former), bond-valence deficit (fallback)"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "70514"
+    ],
+    "detail": "A hydrate whose formula requires 16 H per cell while only 12 are located, leaving q = -4. The research tree's mar_h_topup.py existed because of this entry; it is now a plan computed inside the build with no separate stage. The bond-valence fallback exists because a fully coordinated bridging anion reads capacity 0, so the capacity model can seat nothing."
+   }
+  },
+  "E-h-automation-boundary": {
+   "lesson": "Decline and say why, rather than letting the charge balancer add cations to force neutrality. An acceptor is safe only if neither it nor a bonded neighbour sits on an orientationally disordered site -- tested per acceptor, not globally, so an ordered polyanion elsewhere does not block an unrelated hydroxide proton.",
+   "artifact": "deterministic code",
+   "shipped_as": [
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py",
+     "text": "_accept() in build(); h_restore.applied=false carries a reason, and the missing protons become a quoted correction so the charge gate reads the deficit honestly"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "92244"
+    ],
+    "detail": "A hydrated potassium ferrite of the beta-alumina family: the water O and a mobile K+ share one site at partial occupancy, so which sites carry water is decided per decoration and the acceptor necessarily lies on a disordered orbit. q = -13 on the 536-atom cell, reported rather than hidden.",
+    "residual_hint": true
+   }
+  },
+  "E-slaved-decoration": {
+   "lesson": "Sites that are physically slaved to one another must not be decorated independently. A sub-Angstrom split site coupled to a neighbouring vacancy is one degree of freedom, not two; decorating them separately invents configurations that cannot exist.",
+   "artifact": "diagnostic",
+   "shipped_as": [
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py",
+     "text": "module docstring, COUPLING: 'a sub-Angstrom transition-metal split site'"
+    },
+    {
+     "where": ".claude/skills/mar-analyst/tools.md:88-100",
+     "text": "slaved_units / orientation_units need a full-occupancy anchor of the same element"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "94411"
+    ],
+    "detail": "0.43 A Co split; Co2/Co3 slaved to an As2 vacancy. The research tree's detector missed non-H/O slaving. Distinct from E-supercell-decides, which uses the same entry for a lesson about cell size.",
+    "residual_hint": true
+   }
+  },
+  "E-sibling-composition-match": {
+   "lesson": "A sibling dE computed across differing composition measures a chemical-potential offset, not phase stability. Match the composition before the number means anything.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/principles.md",
+     "text": "sibling section, composition-match requirement"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "157220"
+    ],
+    "detail": "A magnesium titanate."
+   }
+  },
+  "E-sibling-interrogation": {
+   "lesson": "An ordered polymorph of the same composition is evidence worth interrogating: relax it on the same tier and read the gap, but decide what the gap means from the mechanism and the measurement context, never from the number alone.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/principles.md:38-50",
+     "text": "the sibling is a COMPARISON, not a replacement"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "24690"
+    ],
+    "detail": "A feldspar-family aluminosilicate whose ordered polymorph exists."
+   }
+  },
+  "E-sibling-never-adopt": {
+   "lesson": "Never adopt the sibling. The representative is always our own de-averaged MAR. The same energy gap arises in two physically distinct cases -- a refinement artifact (averaged subcell of a missed superstructure, twin/intergrowth, unresolved modulation) and genuine disorder (a real, distinct material) -- and the mechanism call changes only the note, never the deliverable. Decide from the CIF citation title, measurement T, synthesis route, ADP and occupancy signatures, Z-subcell-vs-superlattice. NOT from dE: the gap ranks stability, it cannot tell artifact from metastable.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/principles.md:38-50",
+     "text": "full doctrine, de-identified"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "77307"
+    ],
+    "detail": "A rare-earth vanadium oxide whose own CIF title reads 'domain structure from parallel intergrown alpha/beta phases'; Z=2 averaged subcell of a Z=4 ordered superlattice, small ADP on the channel cation, dE -160 meV/atom. Recorded under the old adopt policy and left as-is.",
+    "residual_hint": true
+   }
+  },
+  "E-sibling-narrow-chemsys": {
+   "lesson": "An exact-chemsys sibling filter cannot see a fully ordered prototype of the same structure type sitting in a NARROWER chemsys, because a trace dopant widens the chemsys. 'None found' therefore means 'none inside too narrow a filter', not 'checked and absent'.",
+   "artifact": "open defect",
+   "shipped_as": [],
+   "provenance": {
+    "entries": [
+     "135766",
+     "433"
+    ],
+    "detail": "A dilute-doped entry whose undoped prototype -- same structure type, same space group, narrower chemsys -- was reachable only by hand. Repeats silently on any corpus with dilute-doped entries.",
+    "open_defect": "D33"
+   }
+  },
+  "E-valence-formula": {
+   "lesson": "Check the built composition against the valence-consistent formula, not only against charge neutrality. A cell can balance and still carry the wrong anion count.",
+   "artifact": "gate",
+   "shipped_as": [],
+   "provenance": {
+    "entries": [],
+    "detail": "A potassium uranium oxide that came out KUO3.5 where the valence-consistent formula is KUO4. Identifier never recorded -- the research ledger's row number is the only handle."
+   }
+  },
+  "E-charge-erases-disorder": {
+   "lesson": "A charge-balancing path can erase the very disorder the model exists to represent, and a status field can be reset to plain ok while a composition MISMATCH still stands. The rollup a gate reads must not be the only place the condition is visible.",
+   "artifact": "gate",
+   "shipped_as": [
+    {
+     "where": "demars-core/tests/test_backtest_regressions.py:1057",
+     "text": "D32 regression"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "252891"
+    ],
+    "detail": "A buffered-valence path reset the status while the mismatch stood. Half fixed: the same blind spot remains one branch over, where values read CONFIDENT so n_unconfident was 0 and the rollup saw nothing (test at :1129).",
+    "open_defect": "D32"
+   }
+  },
+  "E-charge-needs-a-lever": {
+   "lesson": "When a refined occupancy is a real sub-stoichiometry and the cell offers exactly one lever, automatic charge balancing will fill the site to 100% and delete the vacancy. Give the charge model a different lever instead -- a repaired CIF floating the counter-cation's oxidation state off its integer.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/tools.md",
+     "text": "provenance_summary, charge_balancing section"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "119137"
+    ],
+    "detail": "A layered alkali oxide: alkali 3b site refined at occ 0.95(1), a ~5 sigma vacancy, refilled to 100%. Adopted input was a repaired CIF with the counter-cation at 3.05333.",
+    "residual_hint": true
+   }
+  },
+  "E-supercell-decides": {
+   "lesson": "A cell holding a single copy of the disordered unit reports no inter-unit disorder because it cannot host any. Two otherwise near-twin structures can differ in VERDICT by the supercell alone. Build multiplicity-aware: at least two, ideally three independent copies of each disordered unit along each direction, with special attention perpendicular to low-dimensional units.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:153",
+     "text": "SINGLE-CONFIG GATE, conclusion"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "84832",
+     "94411"
+    ],
+    "detail": "One cell held a single column of the disordered unit in 1x1x1 and shipped a wrong single frame; its near-twin held four columns in a [2,2,3] cell and correctly returned an 86 meV/atom ensemble. Only the supercell differed.",
+    "residual_hint": true
+   }
+  },
+  "E-single-config-gate": {
+   "lesson": "A single ordered frame makes the strongest possible claim -- that no residual configurational DOF exists. Earn it with a logged test; never infer it from the mechanism type. 'It is displacive / orientational / a rigid unit, therefore one frame' is exactly how a wrong single frame gets shipped.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:143-144",
+     "text": "SINGLE-CONFIG GATE, opening"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "84832"
+    ],
+    "detail": "See E-supercell-decides."
+   }
+  },
+  "E-ensemble-obligation": {
+   "lesson": "A custom build owes an ensemble whenever the residual DOF is configurational. The custom step is the repair; after repairing, look at what remains. If it is an arrangement with many near-degenerate realizations, sample it randomly, relax them all, and take the representative from those. Emit a single config only when the disorder resolves to a genuinely unique structure.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:133-134",
+     "text": "custom strategy, ensemble obligation"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "41457",
+     "202039",
+     "408993"
+    ],
+    "detail": "A 2/3-occupied cation-vacancy solid solution shipped as a single dispersed config, while an anion-excess fluorite and a channel-cation compound of the same shape were correctly shipped as 13- and 32-config ensembles. The fluorite entry is the paper's Fig. 2 case."
+   }
+  },
+  "E-rigid-polyanion": {
+   "lesson": "Place each rigid unit RIGIDLY -- every ligand at centre + min_image(ligand_site - centre_site), never at the absolute CIF ligand coordinate. Interleaved half-occupied ligand half-sites otherwise mis-credit ligands between neighbouring centres, and relaxation only partly heals it. Charge and fidelity are composition-only and will pass a malformed unit.",
+   "artifact": "doctrine + gate",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/principles.md:69-73",
+     "text": "connectivity gate paragraph"
+    },
+    {
+     "where": "tools/demars_connectivity.py",
+     "text": "gates.connectivity"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "281330"
+    ],
+    "detail": "A caesium-lithium sulfate with simultaneous configurational and orientational disorder.",
+    "residual_hint": true,
+    "open_defect": "D40"
+   }
+  },
+  "E-collapsed-ring": {
+   "lesson": "A planar oxo-anion whose ligand half-sites are merged into one collapses the ring. dangling_anions tracks the energy cost; over-coordination of the former does not.",
+   "artifact": "diagnostic",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md",
+     "text": "--same-excl row"
+    },
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py",
+     "text": "coordination_integrity and config_descriptors docstrings"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "27933"
+    ],
+    "detail": "An orthoborate; per-atom decoration of the shattered ring reaches ~0.5 eV/atom (measured 0.55).",
+    "residual_hint": true
+   }
+  },
+  "E-orientation-dof": {
+   "lesson": "Orientation is a configurational degree of freedom and the mechanism name predicts neither answer. A unit smeared at occ 1/N over N symmetry-equivalent settings with a large ADP on the centre is a rotator CANDIDATE, not a verdict. Relax the alternatives and read their dE -- that number decides, and nothing about the formula does.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:43-51",
+     "text": "orientation as configurational DOF"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "27933",
+     "88201"
+    ],
+    "detail": "Measured on an orthoborate whose eight orientational variants span 551.6 meV/atom and whose ordered sibling supersedes the answer -- the non-degenerate side. The degenerate side of this lesson was measured on entries now held out as a test set, so it is stated here without its evidence: rotator-phase oxo-anions at occ 1/N over N symmetry-equivalent settings can come back within a few meV/atom, and that outcome is not predictable from the formula.",
+    "residual_hint": true
+   }
+  },
+  "E-cell-length-cutoff": {
+   "lesson": "The minimum cell size binds custom builds exactly as it binds engine builds: every lattice-vector length >= 1.5 nm, measured on the ACTUAL vector norms. A primitive cell with short edges at a non-90 degree angle is exactly as short as those edges, even when its atoms sit on a much larger conventional lattice -- the periodic image IS at the primitive edge length. A conventional setting will often clear the cutoff at the same multiplier while preserving exact stoichiometry.",
+   "artifact": "doctrine",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:110-119",
+     "text": "CELL-LENGTH CUTOFF"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "67709"
+    ],
+    "detail": "A gallium chalcogenide whose primitive [3,3,3] cell measured 12.8 A while its atoms sat on a 17.7 A cubic lattice; rebuilt as conventional cubic [3,3,3], 180 atoms, same ratio and ensemble.",
+    "residual_hint": true
+   }
+  },
+  "E-quota-pooling": {
+   "lesson": "Sites sharing a species-occupancy signature are grouped into ONE orbit, so a composition target applies to that group rather than to each site independently. Whether this grouping can suppress a genuine per-site degree of freedom is NOT established in this build -- treat this entry as a pointer to the engine's orbit-grouping behaviour, not as a finding.",
+   "artifact": "open",
+   "shipped_as": [],
+   "provenance": {
+    "entries": [],
+    "detail": "Sourced only from the engine's own orbit-grouping comments -- mar_evidence.py:450 'orbits = positions grouped by occupancy signature' and mar_engine.py:1170 'disordered orbits (by species-occupancy signature)'. The earlier text here described a specific anti-site sampling failure in a lithium molybdate double perovskite, its root cause, and the entry it was seen on; that account came from the manuscript, not from this program's code, comments, or run records, and has been removed along with the entry id that anchored it. No run record and no interpretation entry for that case exists in the source layer. There is no DEFECTS.md entry because no defect is established here; if the failure is reconfirmed from primary measurements, this episode should be rewritten from those, not from the manuscript."
+   }
+  },
+  "E-superposition": {
+   "lesson": "A sub-Angstrom contact between two FULL-occupancy heavy-atom orbits is geometrically impossible in any single cell. It is a SUPERPOSITION -- an average over a modulated, twinned or doubled-orbit structure -- and not decoratable disorder. Build a commensurate de-doubled approximant, quote the modulation, and escalate.",
+   "artifact": "diagnostic",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:233",
+     "text": "full_occ_clash row, flag branch"
+    },
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py:1161",
+     "text": "the superposition fingerprint"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "132010"
+    ],
+    "detail": "0.875 A rare-earth-to-chalcogen self-contact between occ-1.0 8g orbits; the 3D projection of a (3+1)D modulation."
+   }
+  },
+  "E-coincident-images": {
+   "lesson": "Full-occupancy, single-species sites within ~0.05 A are symmetry-expansion duplicates, not disorder. Two full-occ atoms of the same element that close cannot both be real, so removing one is provably non-destructive -- and it stops the template double-counting that species. Targeted at full-occ single-species only, so it never touches legitimate partial split-sites.",
+   "artifact": "deterministic code",
+   "shipped_as": [
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py:744",
+     "text": "dedup_coincident(), n_coincident_removed"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "247186",
+     "209577"
+    ],
+    "detail": "Typically an anion on a high-multiplicity special position, rounded a hair off it."
+   }
+  },
+  "E-dummy-species": {
+   "lesson": "A CIF site labelled with a NON-ELEMENT symbol is a vacancy placeholder OR a mislabeled/truncated real element, and structure plus charge CANNOT decide between them -- the charge may even favour the ELEMENT reading. Resolve CIF-first (citation title, chemical name), then the public reference; never trust the charge alone. The engine default-strips to vacancy so it can proceed, but escalate=True means UNRESOLVED.",
+   "artifact": "diagnostic + deterministic code",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:235",
+     "text": "dummy_species triage row"
+    },
+    {
+     "where": "demars-core/demars_core/_engine/mar_engine.py:831,883,1150",
+     "text": "strip_dummy_species, detect_dummy_species, build()"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "430596"
+    ],
+    "detail": "A vacancy-bearing superionic conductor whose CIF puts a charged 'L1+' at occ 0.4 on an alkali site. The element reading is neutral; the vacancy reading leaves -0.4. Dummy-derived vacancies are CONSTITUTIONAL -- balancing must not silently restore the full-occupancy stoichiometry."
+   }
+  },
+  "E-no-backbone": {
+   "lesson": "When EVERY orbit is vacancy-bearing there is no rigid framework to template the disorder, and relaxed-ensemble cell-shape scatter confirms it. Do NOT random-decorate. Two resolutions, told apart by formula-vs-occupancy: the stoichiometry itself mandates a fixed cation-vacancy fraction (a real correlated/ordered-defect compound), or the formula implies the site is FULL while the CIF lists it partial (a cell-doubling artifact masking a full backbone).",
+   "artifact": "doctrine + diagnostic",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/strategy.md:234",
+     "text": "no_full_backbone triage row"
+    },
+    {
+     "where": "demars-core/demars_core/disorder_class.py:150",
+     "text": "classify_text"
+    },
+    {
+     "where": "demars-core/demars_core/_engine/mar_record.py:180",
+     "text": "cell_scatter()"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "67709",
+     "212755"
+    ],
+    "detail": "A defect chalcogenide with a mandated 1/3 cation-vacancy fraction, and a manganite whose formula wants the site FULL while the CIF lists occ 0.5. The two rank #1 and #2 in a 195-entry cell-scatter census."
+   }
+  },
+  "E-former-not-in-tables": {
+   "lesson": "When a network-former element is absent from the coordination tables the cut falls back to a module default while the real bond sits well above it, and the gate reports unmatched. Name the role explicitly and the cut is derived from the actual bond. A report the analyst cannot act on is the failure mode -- the detail must name the flag.",
+   "artifact": "deterministic code",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/tools.md",
+     "text": "connectivity, --couple-formers"
+    },
+    {
+     "where": "demars-core/tests/test_backtest_regressions.py:1142",
+     "text": "D37 regression"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "67709"
+    ],
+    "detail": "A chalcogenide whose cross-orbit contact is 2.55 A against a 2.0 A default fallback; naming the former yields 2.93 A.",
+    "residual_hint": true
+   }
+  },
+  "E-ligand-role-separation": {
+   "lesson": "One element can occupy two chemically distinct roles in the same cell, and a single coordination expectation for the element will flag every instance of one role. Separate the roles by their ligand sets and coordination numbers before counting defects.",
+   "artifact": "deterministic code",
+   "shipped_as": [
+    {
+     "where": ".claude/skills/mar-analyst/tools.md",
+     "text": "connectivity, role separation"
+    }
+   ],
+   "provenance": {
+    "entries": [
+     "239241"
+    ],
+    "detail": "A cyanide / methylated-cation entry reported 160 defects on a chemically fine cell: 64 from the methylated cation carbon read against the cyanide expectation, and 96 cyanide nitrogens read as zero-coordinate stripped centres.",
+    "residual_hint": true
+   }
+  },
+  "E-h-restore-all-or-nothing": {
+   "lesson": "H-restore's per-acceptor safety check correctly excludes ANY disordered O/N acceptor from its safe capacity tier by element-class membership, not by testing whether that specific site is actually orientationally coupled to anything -- a plain positional/occupancy split or partial water oxygen with no oriented or coupled partner still reads 'unsafe' just because the orbit is disordered. When the formula's H deficit cannot be reconciled through the safe tier alone (the ordered acceptors are too few), restoration declines GLOBALLY rather than completing the ordered acceptors it safely could, and h_restore.applied stays false everywhere -- including on fully-occupied acceptors that were never in doubt. With no H added at all, the charge balancer then has only the disordered orbit left as a lever and drives its target toward EMPTY to cut |q|, erasing an entire charge-neutral water sublattice (removing water changes nothing about net charge, so this never actually helps) rather than leaving the real gap -- missing H -- visible. `charge_balancing: ambiguous` in provenance is the flag that catches the symptom; the underlying cause is upstream, in h_restore's all-or-nothing gate. Fix: when H-restore declines for this reason, hand-complete H on every realized water oxygen -- ordered and disordered alike, since an isolated split/partial water carries no real orientational risk -- as a custom build, BEFORE any charge-balance step runs. A build where every realized oxygen is protonated 2:1 is charge-neutral by construction and needs no balancer at all.",
+   "artifact": "open",
+   "shipped_as": [],
+   "provenance": {
+    "entries": [],
+    "detail": "Measured on a hydrated lanthanide oxalate coordination polymer in which some water oxygens are fully occupied and coordinated to the metal while others are extra, non-coordinated channel waters carrying ordinary positional-split or partial occupancy -- no orientational coupling on any of them -- and H was entirely unlocated in the source refinement. That entry is in a set this project measures over, so the lesson is stated here without its evidence: when the ordered acceptors alone cannot cover the formula H deficit, H-restore declines globally and the charge balancer then empties the disordered orbit, shipping an anhydrous cell. Re-run the held-out cross-check whenever those sets change.",
+    "related_episode": "E-charge-erases-disorder",
+    "residual_hint": true,
+    "open_defect": "h_restore all-or-nothing acceptor gate (see demars-core/docs/DEFECTS.md)"
+   }
+  }
+ }
+}

@@ -1,0 +1,69 @@
+{
+ "_note": "Disordered crystal fixtures for the demars-core test suite. All from the Crystallography Open Database (COD, https://www.crystallography.net) -- public domain (CC0), freely redistributable. NO ICSD data. 'complexity' groups single-mechanism (simple) vs multi-sublattice / split-site / coupled (complex). 'sites' = parsed non-P1 site count.",
+ "cod_1521474.cif": {
+  "cod_id": 1521474,
+  "formula": "Y0.19Zr1.81O3.9",
+  "sites": 6,
+  "complexity": "simple",
+  "mechanism": "aliovalent substitution + charge-compensating O vacancy (yttria-stabilized zirconia, fluorite)"
+ },
+ "cod_1011163.cif": {
+  "cod_id": 1011163,
+  "formula": "Fe3.64O4",
+  "sites": 8,
+  "complexity": "simple",
+  "mechanism": "cation-vacancy disorder (non-stoichiometric Fe oxide)"
+ },
+ "cod_9003141.cif": {
+  "cod_id": 9003141,
+  "formula": "K3.6Na0.4Cl4",
+  "sites": 8,
+  "complexity": "simple",
+  "mechanism": "substitutional solid solution on the cation site ((K,Na)Cl halide)",
+  "role": "engine reference (simple slot); also the README `demars run` quickstart."
+ },
+ "cod_1006128.cif": {
+  "cod_id": 1006128,
+  "formula": "Sr0.5La3.5Mn4O12",
+  "sites": 20,
+  "complexity": "simple",
+  "mechanism": "A-site substitutional solid solution ((La,Sr)MnO3 perovskite)"
+ },
+ "cod_1010497.cif": {
+  "cod_id": 1010497,
+  "formula": "Mg7.2Fe0.8Si4O16",
+  "sites": 28,
+  "complexity": "simple",
+  "mechanism": "cation substitutional solid solution on two M sites ((Mg,Fe)2SiO4 olivine)"
+ },
+ "cod_1520848.cif": {
+  "cod_id": 1520848,
+  "formula": "Ti1.37Fe10.18O18",
+  "sites": 36,
+  "complexity": "simple",
+  "mechanism": "mixed Fe/Ti cation site + vacancy (Fe-Ti oxide)"
+ },
+ "cod_4000330.cif": {
+  "cod_id": 4000330,
+  "formula": "K0.48Mn1.94O5.18",
+  "sites": 24,
+  "complexity": "complex",
+  "mechanism": "split tunnel-K sites over partial positions + mixed-valence Mn framework (hollandite)",
+  "role": "judgment-layer demo (README's `deaverage` example), NOT an engine reference. The engine alone leaves the split tunnel-O images unmerged -- the scalar --same-excl cutoff does not reach 1.26 A -- so the bare-engine representative carries ~100 O-O contacts below 2.0 A that the covalent-radius clash test cannot flag (O-O threshold is (0.66+0.66)*0.6 = 0.79 A, and 1.26 A reads as a legitimate O-O bond). Resolving it needs the analyst. Verified 2026-08-17 to be identical on the current engine and on b3a063b, so this is a standing property of the fixture, not a regression."
+ },
+ "cod_9005182.cif": {
+  "cod_id": 9005182,
+  "formula": "Ca1.8Mg3.64Al1.16Si7.4O24",
+  "sites": 40,
+  "complexity": "complex",
+  "mechanism": "multi-sublattice: partial Ca site + Mg/Al mixed tetrahedral sites (melilite)"
+ },
+ "cod_1544358.cif": {
+  "cod_id": 1544358,
+  "formula": "Sr3Fe3O8",
+  "sites": 40,
+  "complexity": "complex",
+  "mechanism": "split O sites + oxygen-vacancy disorder + mixed-valence Fe (Sr-Fe oxide)",
+  "role": "engine reference (complex slot). Split O sites + O vacancy, resolved cleanly by the engine alone: shortest contact is a real Fe-O bond at 1.86 A, no non-bonded contact under 2.0 A, and two independent runs agree bit-for-bit."
+ }
+}

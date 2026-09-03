@@ -1,0 +1,53 @@
+# DeMARS deployment config -- copy to `demars.yaml` and edit for your machine.
+#
+# Read from $DEMARS_CONFIG, ./demars.yaml, or ~/.config/demars/demars.yaml (.yml/.json also work).
+# NOTE the middle one is relative to the CURRENT DIRECTORY: run from the repo root, or set
+# $DEMARS_CONFIG, or keep a copy in ~/.config/demars/. Whatever is resolved is stamped into every
+# record under `generation_recipe.mlip`, together with the sha256 of the weights actually loaded --
+# so a record says which checkpoint produced it, not merely which path was configured.
+#
+# `demars.yaml` itself is gitignored: it holds machine paths and an API key.
+
+models:
+  # `spec` is a local checkpoint path OR a name this sevenn can resolve (e.g. 7net-omni).
+  # nano = the sampling tier, omni = the final tier. Nano's four cutoff variants are the same
+  # size but different weights: pin the file if you care which one a campaign used.
+  nano: {spec: /path/to/sevennet_ckpt/checkpoint_7net_nano_5.5.pth}
+  omni: {spec: 7net-omni, modal: mpa}
+
+compute:
+  # Fused-kernel backend for SevenNet's equivariant tensor products:
+  #   none  | cueq (NVIDIA cuEquivariance) | oeq (OpenEquivariance) | flash
+  # Leave at `none` unless you have measured a win on YOUR structures -- on a 576-atom cell with
+  # 7net-nano it was only 1.17x, because the graph is small enough that kernel time is not the cost.
+  # It changes the numbers slightly (fused kernels sum in a different order), so it is declared in
+  # the config and stamped into every record -- a setting that lives only in a shell variable can
+  # differ between two terminals on one machine. $DEMARS_ACCELERATOR overrides this.
+  # Naming a backend that is not installed is a hard error, never a silent fallback.
+  accelerator: none
+
+paths:
+  # Where a bare checkpoint name is looked up. $DEMARS_CKPT_DIR overrides this.
+  checkpoint_dir: /path/to/sevennet_ckpt
+  # The demars env's interpreter, by ABSOLUTE path -- `tools/py` runs every tool through it, and
+  # this is the one place the env location is written down. $DEMARS_PY overrides it. Set it: an
+  # agent's shell is re-initialized from the profile on every call, so a bare `python` is whatever
+  # the profile leaves behind and has no demars_core, however the session was launched.
+  python: /path/to/conda/envs/demars/bin/python
+  # Ordered-sibling search (local ICSD). $ICSD_DB_DIR overrides this. Leaving it unset is fine and
+  # honest: the record then says the search did NOT run, which is different from "no ordered form
+  # of this composition exists". Never report the first as the second.
+  icsd_db: null
+
+materials_project:
+  api_key: null                         # convex hull only; $MP_API_KEY wins over this
+
+hull:
+  # Stability threshold for gates.hull, eV/atom. NULL = the gate reports E_above_hull and leaves
+  # `pass` null, which is what the research pipeline did -- it computed the number and let a human
+  # judge it. There is no inherited line to default to, and the two terms that set one are
+  # system-dependent: the configurational entropy the 0 K hull omits (kB*T*ln2 per mixed site,
+  # diluted by that sublattice's share of the atoms, at the CIF's own refinement temperature) and
+  # the energy-scale error, which differs between the mp-direct and self-consistent modes.
+  # Set it once you have measured where your corpus actually sits. --hull-tol overrides this.
+  tol_eV_per_atom: null

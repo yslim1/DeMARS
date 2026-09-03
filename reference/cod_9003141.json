@@ -1,0 +1,37 @@
+{
+ "entry": "cod_9003141",
+ "exact": {
+  "formula": "Cl32K29Na3",
+  "n_atoms_template": 64,
+  "n_total": 8,
+  "representative_charge": 0.0,
+  "representative_composition": {
+   "Cl": 32,
+   "K": 29,
+   "Na": 3
+  },
+  "representative_n_atoms": 64,
+  "status": "de-averaged",
+  "supercell": [
+   2,
+   2,
+   2
+  ]
+ },
+ "reported": {
+  "n_relaxed": 8,
+  "spread_meV": 2.2
+ },
+ "settings": {
+  "final": false,
+  "max_rounds": 1,
+  "min_cell": 8.0,
+  "n_samples": 6
+ },
+ "stamped_sha256": "75d9a06c843e1c2c6aaa6435407cf9ace0b3dba85c3271a3a0c7da5170d1cf17",
+ "stamped_with": "checkpoint_7net_nano_5.5.pth",
+ "tolerant": {
+  "E_tol_meV_per_atom": 20.0,
+  "ground_E_per_atom": -3.4068
+ }
+}

@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demars-core"
+version = "0.0.1.dev0"
+description = "De-average a disordered crystal (partial occupancies / split sites) into a Minimal Atomistic Representation (MAR), from any CIF, with a pluggable universal-MLIP backend."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+# demars-core is part of the SevenNet ecosystem. torch-sim is the batched-relaxation
+# engine (it replaced an earlier batched-relaxation backend); sevenn (+ a CUDA-matched torch) -- the SevenNet
+# backend torch-sim drives -- is left to the SevenNet install, since torch is
+# machine-specific.
+# Floors are the OLDEST versions the suite has actually been run against, not guesses. They are
+# here because an unpinned dependency once decided a chemical result: ASE moved the optimizer's
+# convergence predicate onto `Optimizable`, the serial relaxer's bare call started raising
+# TypeError, and every config came back "did not relax" -- silently. The code no longer depends on
+# that API (see calculators.ase_relax_batch), and the suite is run on two stacks
+# (ase 3.26.0/numpy 2.1.3 and ase 3.29.0/numpy 2.5.1) so a drift like it cannot pass unnoticed.
+dependencies = [
+  "numpy>=2.1",
+  "ase>=3.26",
+  "pymatgen>=2026.5",
+  "torch-sim-atomistic>=0.6",
+  # Materials Project client -- the convex hull's reference phases. A HARD dependency, not an extra,
+  # because `gates.hull` is one of the five gates: a gate whose machinery may or may not be
+  # installed makes "all gates clean" mean different things on different boxes. It is not small --
+  # 0.46.5 pulls ~20 packages (emmet-core, boto3, pyarrow, deltalake) -- but all pure Python, no
+  # CUDA, and it does NOT move pymatgen/ase/numpy/torch (verified on 2026-08-24 against
+  # pymatgen 2026.8.13 / ase 3.29.0 / numpy 2.5.2). The KEY stays deployment config, and its absence
+  # is reported as `gates.hull.state == "not_run"` (pass null), never raised -- see hull.py.
+  "mp-api>=0.45",
+  # demars.yaml -- the deployment config (pinned weights, local paths, API key)
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+# turnkey SevenNet runtime: also pull sevenn. NOTE: torch is a transitive dep of
+# sevenn and is CUDA-specific -- for GPU, install a CUDA-matched torch FIRST, then
+# `pip install demars-core[sevennet]`. >=0.12.2 excludes the pre-enable_oeq 0.12.1.
+sevennet = ["sevenn>=0.12.2"]
+# fused-kernel accelerators for compute.accelerator in demars.yaml. NOT hard deps: `oeq`
+# (openequivariance) has no wheels and builds from source against a CUDA toolchain, so
+# requiring it would make `pip install demars-core` fail on any box without nvcc -- and the
+# default config is accelerator: none, which uses neither.
+oeq = ["sevenn[oeq]>=0.12.2"]
+cueq = ["sevenn[cueq12]>=0.12.2"]
+# kept as a no-op alias so `pip install "demars-core[hull]"` (which earlier docs and scripts used)
+# still resolves; mp-api moved into the hard dependencies when the hull became a gate.
+hull = []
+
+[project.scripts]
+demars = "demars_core.cli:main"
+
+[tool.setuptools.packages.find]
+# ship the package + its engine sub-package; nothing else in this repo
+include = ["demars_core*"]
+
+[tool.setuptools.package-data]
+# ship the vendored view3d viewer (HTML/JS) so `demars gallery` works after install
+demars_core = ["viewer/view3d.html", "viewer/js/*.js", "viewer/js/*.txt", "viewer/PROVENANCE.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "mlip: test needs a universal-MLIP backend loaded (relaxation); skipped if unavailable",
+]

@@ -1,0 +1,7 @@
+#!/bin/bash
+# Thin launcher for the ICSD metadata CLI. Copy to ~/.local/bin/icsd-query (chmod +x).
+#
+# ICSD_DB_DIR names the directory holding icsd.sqlite + icsd_cif.zip AND the query code.
+# It is the same variable DeMARS reads for its ordered-sibling search, so setting it once
+# in demars.yaml (`paths.icsd_db`) or the shell covers both.
+exec "${DEMARS_PY:-python}" "${ICSD_QUERY_HOME:-${ICSD_DB_DIR:-$HOME/icsd_db}}/query.py" "$@"

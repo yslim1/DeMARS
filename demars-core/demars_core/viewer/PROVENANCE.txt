@@ -1,0 +1,25 @@
+Vendored copy of the view3d browser structure/trajectory viewer
+(view3d.html + js/3Dmol-min.js). Self-contained: 3Dmol.js is bundled locally,
+no CDN. This is a snapshot of the canonical view3d viewer; refresh it from that
+source if the viewer is updated upstream.
+
+THIRD-PARTY CODE SHIPPED HERE
+-----------------------------
+js/3Dmol-min.js is a minified, webpack-bundled build of 3Dmol.js
+(https://github.com/3dmol/3Dmol.js), redistributed here under BSD-3-Clause.
+Its license text is js/3Dmol-LICENSE.txt -- required to be retained on
+redistribution, in both source and binary form.
+
+The bundle also incorporates permissively licensed components, per 3Dmol.js's
+own license information:
+  * GLmol      -- MIT or LGPL-3.0 (dual), (c) 2011-2012 biochem_fan
+  * Three.js   -- MIT, (c) 2010-2012 three.js authors
+  * jQuery     -- MIT, (c) 2011 John Resig
+
+TODO the minified bundle's first line points at a webpack-extracted notice file,
+`3Dmol-min.js.LICENSE.txt`, which was NOT copied in with the snapshot. Fetch it
+from the upstream release this bundle was built from and drop it in beside the
+.js, so the per-module notices ship exactly as generated. The summary above is
+accurate but is not a substitute for that file.
+
+view3d.html itself is part of this project and carries the project's license.

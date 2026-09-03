@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>3D structure viewer</title>
+<script src="js/3Dmol-min.js"></script>
+<style>
+html,body{height:100%}
+body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;margin:0;background:#f4f6f8;color:#222;
+  display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:8px 16px;background:#2c3e50;color:#eef;
+  flex:0 0 auto}
+.bar b{font-size:1.02em;font-weight:600}
+.bar .small{color:#cdd8e2;font-size:0.82em}
+.bar a{color:#8ec7ff;text-decoration:none;font-size:0.85em}
+.bar a:hover{text-decoration:underline}
+button,select{background:#3d5167;color:#eef;border:1px solid #55708e;border-radius:5px;padding:4px 10px;
+  font-size:0.83em;cursor:pointer}
+button:hover,select:hover{background:#4a6076}
+button.on{background:#2e9e5b;border-color:#2e9e5b}
+button:disabled{opacity:0.4;cursor:default}
+#stage{position:relative;flex:1 1 auto;min-height:0}
+#viewer{width:100%;height:100%;position:relative}
+#err{padding:30px;color:#c0392b;font-size:1.05em}
+.framebar{display:flex;align-items:center;gap:8px}
+input[type=range]{width:180px}
+input[type=number]{width:38px;background:#3d5167;color:#eef;border:1px solid #55708e;border-radius:4px;padding:2px 3px;font-size:0.83em}
+#fnum{font-family:Menlo,Consolas,monospace;font-size:0.82em;min-width:64px}
+#legend{position:absolute;left:12px;bottom:12px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;
+  background:rgba(20,28,40,0.55);border-radius:8px;padding:6px 10px;font-size:0.85em;color:#eef}
+#legend .sw{display:inline-block;width:13px;height:13px;border-radius:50%;border:1px solid #0006;
+  vertical-align:-2px;margin-right:4px}
+#legend .lgi{cursor:pointer;user-select:none}
+#legend .lgi:hover{text-decoration:underline}
+#legend .ovl{opacity:.85;font-style:italic;margin-left:1px}
+#compass{position:absolute;right:10px;bottom:10px;width:118px;height:118px;z-index:5;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="bar">
+  <b id="title">3D viewer</b>
+  <span class="small" id="meta"></span>
+  <select id="style" title="drawing style">
+    <option value="bs">ball &amp; stick</option>
+    <option value="stick">stick</option>
+    <option value="sphere">spacefill</option>
+  </select>
+  <select id="scheme" title="element color scheme">
+    <option value="vesta">VESTA colors</option>
+    <option value="jmol">Jmol colors</option>
+  </select>
+  <select id="proj" title="camera projection">
+    <option value="ortho">orthographic</option>
+    <option value="persp">perspective</option>
+  </select>
+  <button id="cellbtn" title="show unit cell">cell</button>
+  <button id="axesbtn" title="show a,b,c lattice-vector triad (a=red, b=green, c=blue)">axes</button>
+  <span class="small" title="replication along a, b, c">rep
+    <input type="number" id="na" min="1" max="5" value="1">&times;<input type="number" id="nb" min="1" max="5" value="1">&times;<input type="number" id="nc" min="1" max="5" value="1">
+  </span>
+  <span class="small" title="bond tolerance: bond if d &lt; factor x (r_cov1 + r_cov2)">bond&times;
+    <input type="number" id="bondf" min="0.8" max="1.6" step="0.02" value="1.15" style="width:52px">
+  </span>
+  <button id="pbcbtn" title="half-bond stubs to periodic images (Materials-Studio style)">pbc bonds</button>
+  <button id="bgbtn" title="toggle background">bg</button>
+  <button id="resetbtn" title="reset view">reset</button>
+  <span class="framebar" id="framebar" style="display:none">
+    <button id="playbtn">&#9654;</button>
+    <input type="range" id="frame" min="0" max="0" value="0">
+    <span id="fnum"></span>
+    <button id="ovlbtn" title="overlay all frames in one scene (OVITO-style trajectory): mobile atoms at every frame position + trajectory lines">overlay</button>
+  </span>
+  <a id="dl" download>&#11015; download file</a>
+</div>
+<div id="stage"><div id="viewer"></div><div id="legend" style="display:none"></div><div id="compass" style="display:none"></div></div>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var f = q.get('f') || '';
+  var label = q.get('label') || f.split('/').pop();
+  if (!f || f.indexOf('..') >= 0 || /^([a-z]+:)?\/\//i.test(f) || f[0] === '/') {
+    document.getElementById('stage').innerHTML = '<div id="err">No (or invalid) file given. Use view3d.html?f=files/&hellip;/structure.cif</div>';
+    return;
+  }
+  document.getElementById('title').textContent = label;
+  document.title = label + ' — 3D viewer';
+  document.getElementById('dl').href = f;
+
+  var ext = f.toLowerCase().split('.').pop();
+  var fmt = ext === 'cif' ? 'cif' : (ext === 'vasp' || ext === 'poscar') ? 'vasp' : 'xyz';
+
+  // ============ PBC-aware structure engine (wrapper-side; 3Dmol only renders) ============
+  // Covalent radii (Cordero 2008), Å — common elements; default 1.5
+  var RAD = {H:0.31,He:0.28,Li:1.28,Be:0.96,B:0.84,C:0.76,N:0.71,O:0.66,F:0.57,Ne:0.58,Na:1.66,Mg:1.41,
+    Al:1.21,Si:1.11,P:1.07,S:1.05,Cl:1.02,Ar:1.06,K:2.03,Ca:1.76,Sc:1.70,Ti:1.60,V:1.53,Cr:1.39,Mn:1.39,
+    Fe:1.32,Co:1.26,Ni:1.24,Cu:1.32,Zn:1.22,Ga:1.22,Ge:1.20,As:1.19,Se:1.20,Br:1.20,Kr:1.16,Rb:2.20,
+    Sr:1.95,Y:1.90,Zr:1.75,Nb:1.64,Mo:1.54,Tc:1.47,Ru:1.46,Rh:1.42,Pd:1.39,Ag:1.45,Cd:1.44,In:1.42,
+    Sn:1.39,Sb:1.39,Te:1.38,I:1.39,Xe:1.40,Cs:2.44,Ba:2.15,La:2.07,Ce:2.04,Gd:1.96,Hf:1.75,Ta:1.70,
+    W:1.62,Re:1.51,Os:1.44,Ir:1.41,Pt:1.36,Au:1.36,Hg:1.32,Tl:1.45,Pb:1.46,Bi:1.48};
+  var BOND_F = 1.15, BOND_MIN = 0.4;
+
+  function matInv3(m){
+    var a=m[0][0],b=m[0][1],c=m[0][2],d=m[1][0],e=m[1][1],g=m[1][2],h=m[2][0],i=m[2][1],j=m[2][2];
+    var A=e*j-g*i, B=g*h-d*j, C=d*i-e*h, det=a*A+b*B+c*C;
+    return [[A/det,(c*i-b*j)/det,(b*g-c*e)/det],[B/det,(a*j-c*h)/det,(c*d-a*g)/det],[C/det,(b*h-a*i)/det,(a*e-b*d)/det]];
+  }
+  function mvec(M,v){ return [M[0][0]*v[0]+M[0][1]*v[1]+M[0][2]*v[2],
+                              M[1][0]*v[0]+M[1][1]*v[1]+M[1][2]*v[2],
+                              M[2][0]*v[0]+M[2][1]*v[1]+M[2][2]*v[2]]; }
+  function fracToCart(cell, fr){ // cell rows = lattice vectors a,b,c
+    return [fr[0]*cell[0][0]+fr[1]*cell[1][0]+fr[2]*cell[2][0],
+            fr[0]*cell[0][1]+fr[1]*cell[1][1]+fr[2]*cell[2][1],
+            fr[0]*cell[0][2]+fr[1]*cell[1][2]+fr[2]*cell[2][2]]; }
+  function cartToFrac(inv, p){ // inv = inverse of cell^T applied as frac = p · cell^-1 (row-vector conv.)
+    return mvec(inv, p); }
+  function normElem(s){
+    s = s.replace(/[^A-Za-z]/g, '');
+    return s.charAt(0).toUpperCase() + s.slice(1, 2).toLowerCase();
+  }
+
+  // ---- parsers -> {cell: [[..],[..],[..]] | null, frames: [{elems:[], pos:[[x,y,z],...],
+  //      sites: [null | [{e,o},...]]}]}  — sites[i] non-null = disordered site (VESTA pie)
+  function fracOf(s){
+    if (s.indexOf('/') > 0){ var ab = s.split('/'); return parseFloat(ab[0])/parseFloat(ab[1]); }
+    return parseFloat(s);
+  }
+  function parseOpStr(s){   // 'x,-y+1/2,z' -> 3x4 row matrices; throws on anything it can't read
+    var parts = s.toLowerCase().replace(/\s+/g, '').split(',');
+    if (parts.length !== 3) throw 'symop';
+    return parts.map(function(p){
+      var row = [0, 0, 0, 0];
+      (p.match(/[+-]?[^+-]+/g) || []).forEach(function(t){
+        var sgn = t[0] === '-' ? -1 : 1, body = t.replace(/^[+-]/, '');
+        var ax = body.indexOf('x') >= 0 ? 0 : body.indexOf('y') >= 0 ? 1 : body.indexOf('z') >= 0 ? 2 : -1;
+        if (ax >= 0) {
+          var coef = body.replace(/[xyz*]/g, '');
+          row[ax] += sgn * (coef === '' ? 1 : fracOf(coef));
+        } else {
+          var v = fracOf(body);
+          if (isNaN(v)) throw 'symop';
+          row[3] += sgn * v;
+        }
+      });
+      return row;
+    });
+  }
+  function extractSymops(txt){  // ops from the symop loop; null if none found
+    var re = /loop_[^\S\n]*\n((?:\s*_\S+[^\n]*\n)+)([\s\S]*?)(?=\n\s*loop_|\n\s*_[a-zA-Z]|\n\s*data_|$)/g, m;
+    while ((m = re.exec(txt))) {
+      var cols = m[1].trim().split(/\s+/).filter(function(c){ return c[0] === '_'; });
+      if (!cols.some(function(c){ return /_(space_group_symop_operation_xyz|symmetry_equiv_pos_as_xyz)$/i.test(c); })) continue;
+      var ops = [];
+      m[2].trim().split('\n').forEach(function(line){
+        line = line.trim();
+        if (!line || line[0] === '#') return;
+        var qm = line.match(/'([^']+)'|"([^"]+)"/);
+        var s = qm ? (qm[1] || qm[2]) : line.replace(/^\d+\s+/, '');
+        if (/[xyz]/i.test(s) && s.indexOf(',') > 0) ops.push(parseOpStr(s));
+      });
+      if (ops.length) return ops;
+    }
+    return null;
+  }
+  function parseCIF(txt){
+    function num(re){ var m = txt.match(re); return m ? parseFloat(m[1]) : null; }
+    var a  = num(/_cell_length_a\s+([\d.eE+-]+)/), b = num(/_cell_length_b\s+([\d.eE+-]+)/),
+        c  = num(/_cell_length_c\s+([\d.eE+-]+)/), al = num(/_cell_angle_alpha\s+([\d.eE+-]+)/),
+        be = num(/_cell_angle_beta\s+([\d.eE+-]+)/), ga = num(/_cell_angle_gamma\s+([\d.eE+-]+)/);
+    if (a === null || b === null || c === null) throw 'no cell';
+    var D = Math.PI/180, ca = Math.cos(al*D), cb = Math.cos(be*D), cg = Math.cos(ga*D), sg = Math.sin(ga*D);
+    var cell = [[a, 0, 0], [b*cg, b*sg, 0],
+                [c*cb, c*(ca - cb*cg)/sg, c*Math.sqrt(Math.max(0, 1 - cb*cb - Math.pow((ca - cb*cg)/sg, 2)))]];
+    // atom loop: find loop_ whose header contains _atom_site_fract_x
+    var mloop = txt.match(/loop_\s*((?:\s*_atom_site[^\n]*\n)+)([\s\S]*?)(?=\n\s*loop_|\n\s*_[a-zA-Z]|$)/);
+    if (!mloop) throw 'no atom loop';
+    var cols = mloop[1].trim().split(/\s+/), rows = mloop[2].trim().split('\n');
+    var iSym = cols.indexOf('_atom_site_type_symbol'); if (iSym < 0) iSym = cols.indexOf('_atom_site_label');
+    var ix = cols.indexOf('_atom_site_fract_x'), iy = cols.indexOf('_atom_site_fract_y'), iz = cols.indexOf('_atom_site_fract_z');
+    var iOcc = cols.indexOf('_atom_site_occupancy');
+    if (ix < 0) throw 'no fract coords';
+    var raw = [];
+    rows.forEach(function(r){
+      var t = r.trim().split(/\s+/);
+      if (t.length < cols.length) return;
+      var o = iOcc >= 0 ? parseFloat(t[iOcc]) : 1;
+      raw.push({e: normElem(t[iSym]), o: (isNaN(o) ? 1 : o),
+                f: [parseFloat(t[ix]), parseFloat(t[iy]), parseFloat(t[iz])]});
+    });
+    if (!raw.length) throw 'empty atom loop';
+    // ---- symmetry expansion (replaces the old bail-to-native on non-P1 CIFs).
+    // Any symop-parse failure throws -> caller falls back to the native renderer as before.
+    function wrapD(u, v){ var d = Math.abs(u - v) % 1; return Math.min(d, 1 - d); }
+    function sameF(fa, fb){ return wrapD(fa[0],fb[0]) < 0.002 && wrapD(fa[1],fb[1]) < 0.002 && wrapD(fa[2],fb[2]) < 0.002; }
+    var ops = extractSymops(txt), expanded;
+    if (ops && ops.length > 1) {
+      expanded = [];
+      raw.forEach(function(s){
+        var orbit = [];
+        ops.forEach(function(op){
+          var nf = [0,1,2].map(function(r2){
+            var v = op[r2][0]*s.f[0] + op[r2][1]*s.f[1] + op[r2][2]*s.f[2] + op[r2][3];
+            return ((v % 1) + 1) % 1;
+          });
+          if (!orbit.some(function(g){ return sameF(g, nf); })) orbit.push(nf);
+        });
+        orbit.forEach(function(nf){ expanded.push({e: s.e, o: s.o, f: nf}); });
+      });
+      if (expanded.length > 4000) throw 'too many expanded sites';
+    } else expanded = raw;   // P1: keep coords exactly as written (no wrapping — preserves slabs)
+    // ---- group co-located rows (substitutional disorder: Li/Fe on one site; occ-split rows).
+    // Same crystallographic site = wrapped distance < 0.1 A. True split positions stay separate.
+    var sites = [];
+    expanded.forEach(function(s){
+      for (var k = 0; k < sites.length; k++) {
+        var g = sites[k];
+        var dc = fracToCart(cell, [wrapD(g.f[0],s.f[0]), wrapD(g.f[1],s.f[1]), wrapD(g.f[2],s.f[2])]);
+        if (dc[0]*dc[0] + dc[1]*dc[1] + dc[2]*dc[2] < 0.01) {
+          var hit = null;
+          g.species.forEach(function(sp){ if (sp.e === s.e) hit = sp; });
+          if (hit) hit.o += s.o; else g.species.push({e: s.e, o: s.o});
+          return;
+        }
+      }
+      sites.push({f: s.f.slice(), species: [{e: s.e, o: s.o}]});
+    });
+    var elems = [], pos = [], socc = [], nDis = 0;
+    sites.forEach(function(g){
+      g.species.sort(function(p, q){ return q.o - p.o; });
+      var tot = 0; g.species.forEach(function(sp){ tot += sp.o; });
+      var dis = g.species.length > 1 || tot < 0.99;
+      elems.push(g.species[0].e);
+      pos.push(fracToCart(cell, g.f));
+      socc.push(dis ? g.species : null);
+      if (dis) nDis++;
+    });
+    return {cell: cell, frames: [{elems: elems, pos: pos, sites: socc, nDis: nDis}]};
+  }
+  function parseXYZ(txt){
+    var lines = txt.split('\n'), i = 0, frames = [], cell = null;
+    while (i < lines.length) {
+      var n = parseInt(lines[i]);
+      if (isNaN(n) || n <= 0) { i++; continue; }
+      var comment = lines[i+1] || '';
+      var lm = comment.match(/Lattice="([^"]+)"/i);
+      var fcell = null;
+      if (lm) {
+        var v = lm[1].trim().split(/\s+/).map(parseFloat);
+        if (v.length === 9) fcell = [[v[0],v[1],v[2]],[v[3],v[4],v[5]],[v[6],v[7],v[8]]];
+      }
+      var elems = [], pos = [];
+      for (var k = 0; k < n && i+2+k < lines.length; k++) {
+        var t = lines[i+2+k].trim().split(/\s+/);
+        if (t.length < 4) continue;
+        elems.push(normElem(t[0]));
+        pos.push([parseFloat(t[1]), parseFloat(t[2]), parseFloat(t[3])]);
+      }
+      frames.push({elems: elems, pos: pos, cell: fcell});
+      if (fcell && !cell) cell = fcell;
+      i += n + 2;
+    }
+    if (!frames.length) throw 'no xyz frames';
+    return {cell: cell, frames: frames};
+  }
+  function parsePOSCAR(txt){
+    var L = txt.split('\n');
+    var scale = parseFloat(L[1]);
+    var cell = [2,3,4].map(function(i){ return L[i].trim().split(/\s+/).map(function(x){ return parseFloat(x)*scale; }); });
+    var names = L[5].trim().split(/\s+/), counts = L[6].trim().split(/\s+/).map(Number);
+    var mode = (L[7] || '').trim().toLowerCase();
+    var off = 8;
+    if (mode[0] === 's') { mode = (L[8] || '').trim().toLowerCase(); off = 9; }
+    var direct = mode[0] === 'd';
+    var elems = [], pos = [];
+    var idx = off;
+    names.forEach(function(nm, gi){
+      for (var k = 0; k < counts[gi]; k++, idx++) {
+        var t = L[idx].trim().split(/\s+/).map(parseFloat);
+        elems.push(normElem(nm));
+        pos.push(direct ? fracToCart(cell, t) : [t[0]*scale, t[1]*scale, t[2]*scale]);
+      }
+    });
+    return {cell: cell, frames: [{elems: elems, pos: pos}]};
+  }
+
+  // ---- PBC bond perception: enumerate ALL periodic images within the cutoff (NOT just the
+  // minimum image — in small cells an atom legitimately bonds the SAME neighbor through two
+  // different images, e.g. a bridging O along a 3.1 Å axis; keeping only the MIC bond made
+  // such oxygens look 2-fold coordinated).
+  function computeBonds(frame, cell){
+    var n = frame.elems.length, bonds = [];
+    var radii = frame.elems.map(function(e){ return RAD[e] || 1.5; });
+    if (!cell) {
+      for (var i = 0; i < n; i++) for (var j = i+1; j < n; j++) {
+        var rmax = state.bondf * (radii[i] + radii[j]);
+        var dx = frame.pos[j][0]-frame.pos[i][0], dy = frame.pos[j][1]-frame.pos[i][1], dz = frame.pos[j][2]-frame.pos[i][2];
+        var d2 = dx*dx + dy*dy + dz*dz;
+        if (d2 < rmax*rmax && d2 > BOND_MIN*BOND_MIN) bonds.push({i:i, j:j, s:[0,0,0]});
+      }
+      return bonds;
+    }
+    // per-axis image range from perpendicular cell widths vs the largest possible cutoff
+    function cross(u, v){ return [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]]; }
+    function dot(u, v){ return u[0]*v[0]+u[1]*v[1]+u[2]*v[2]; }
+    function nrm(u){ return Math.sqrt(dot(u, u)); }
+    var vol = Math.abs(dot(cell[0], cross(cell[1], cell[2])));
+    var rGlobal = state.bondf * 2 * Math.max.apply(null, radii);
+    var nsh = [cross(cell[1],cell[2]), cross(cell[2],cell[0]), cell && cross(cell[0],cell[1])].map(function(cx){
+      var w = vol / nrm(cx);                       // perpendicular width along this axis
+      return Math.max(1, Math.ceil(rGlobal / w));  // >=1 so adjacent-cell bonds are always seen
+    });
+    for (var i = 0; i < n; i++) {
+      for (var j = i; j < n; j++) {
+        var rmax = state.bondf * (radii[i] + radii[j]), rmax2 = rmax*rmax;
+        for (var sa = -nsh[0]; sa <= nsh[0]; sa++)
+        for (var sb = -nsh[1]; sb <= nsh[1]; sb++)
+        for (var sc = -nsh[2]; sc <= nsh[2]; sc++) {
+          if (i === j) {  // self-image bonds: count each once (lexicographically positive shifts)
+            if (sa < 0 || (sa === 0 && (sb < 0 || (sb === 0 && sc <= 0)))) continue;
+          }
+          var dx = frame.pos[j][0] + sa*cell[0][0] + sb*cell[1][0] + sc*cell[2][0] - frame.pos[i][0];
+          var dy = frame.pos[j][1] + sa*cell[0][1] + sb*cell[1][1] + sc*cell[2][1] - frame.pos[i][1];
+          var dz = frame.pos[j][2] + sa*cell[0][2] + sb*cell[1][2] + sc*cell[2][2] - frame.pos[i][2];
+          var d2 = dx*dx + dy*dy + dz*dz;
+          if (d2 < rmax2 && d2 > BOND_MIN*BOND_MIN) bonds.push({i:i, j:j, s:[sa, sb, sc]});
+        }
+      }
+    }
+    return bonds;
+  }
+
+  // ============ rendering ============
+  var state = {style:'bs', scheme:'vesta', cell:true, na:1, nb:1, nc:1, bondf:1.15, pbc:true, dark:true, frame:0, playing:false, timer:null, overlay:false, ortho:true, axes:true, elemStyle:{}};
+  // auto-fit the camera only on the FIRST draw; keep the user's zoom/pan/rotation across frame changes,
+  // style toggles, etc. (removeAllModels leaves the camera untouched — only zoomTo() re-fits it). The Reset
+  // button and projection change still re-fit / restore explicitly.
+  var firstDraw = true;
+  // per-element drawing-style overrides (VESTA-style mixed rendering). Preset via URL:
+  //   &sphere=Pd,Au   &bs=C,H,O,N   &stick=...   &hide=...   (element -> that style; else follows global)
+  ['sphere','bs','stick','hide'].forEach(function(sty){
+    (q.get(sty) || '').split(',').forEach(function(e){ e = e.trim(); if (e) state.elemStyle[normElem(e)] = sty; });
+  });
+  var viewer = null, S = null, useNative = false, rawTxt = null;
+
+  // VESTA element palette (authoritative RGB values via pymatgen's ElementColorSchemes VESTA table)
+  var VESTA = {
+    H:0xffcccc,He:0xfce8ce,Li:0x86df73,Be:0x5ed77b,B:0x1fa20f,C:0x4c4c4c,N:0xb0b9e6,O:0xfe0300,
+    F:0xb0b9e6,Ne:0xfe37b5,Na:0xf9dc3c,Mg:0xfb7b15,Al:0x81b2d6,Si:0x1b3bfa,P:0xc09cc2,S:0xfffa00,
+    Cl:0x31fc02,Ar:0xcffec4,K:0xa121f6,Ca:0x5a96bd,Sc:0xb563ab,Ti:0x78caff,V:0xe51900,Cr:0x00009e,
+    Mn:0xa7089d,Fe:0xb57100,Co:0x0000af,Ni:0xb7bbbd,Cu:0x2247dc,Zn:0x8f8f81,Ga:0x9ee373,Ge:0x7e6ea6,
+    As:0x74d057,Se:0x9aef0f,Br:0x7e3102,Kr:0xfac1f3,Rb:0x702eb0,Sr:0x00ff00,Y:0x94ffff,Zr:0x00ff00,
+    Nb:0x73c2c9,Mo:0x54b5b5,Tc:0x3b9e9e,Ru:0x248f8f,Rh:0x0a7d8c,Pd:0x006985,Ag:0xc0c0c0,Cd:0xffd98f,
+    In:0xa67573,Sn:0x9a8eb9,Sb:0x9e63b5,Te:0xd47a00,I:0x940094,Xe:0x429eb0,Cs:0x57178f,Ba:0x00c900,
+    La:0x5ac449,Ce:0xffffc7,Gd:0x45ffc7,Hf:0x4dc2ff,Ta:0x4da6ff,W:0x2194d6,Re:0x267dab,Os:0x266696,
+    Ir:0x175487,Pt:0xd0d0e0,Au:0xffd123,Hg:0xb8b8d0,Tl:0xa6544d,Pb:0x575961,Bi:0x9e4fb5};
+
+  function styles(){
+    var cs = state.scheme === 'vesta' ? {prop:'elem', map:VESTA} : undefined;
+    function st(o){ if (cs) o.colorscheme = cs; return o; }
+    return { bs:     {stick: st({radius:0.13}), sphere: st({scale:0.28})},
+             stick:  {stick: st({radius:0.16})},
+             sphere: {sphere: st({scale:0.85})} };
+  }
+  function elemColor(e){
+    if (state.scheme === 'vesta' && VESTA[e] !== undefined) return VESTA[e];
+    var tbl = ($3Dmol.elementColors && ($3Dmol.elementColors.Jmol || $3Dmol.elementColors.defaultColors)) || {};
+    return (tbl[e] !== undefined) ? tbl[e] : 0x909090;
+  }
+
+  // ---- VESTA-style disordered sites: sphere painted in azimuthal sectors, angle ∝ occupancy;
+  // any unoccupied remainder = a white/grey vacancy slice. One addCustom mesh per sector.
+  // Radii replicate 3Dmol's own sphere sizing (GLModel.vdwRadii, default 1.5) so pies match
+  // the ordered atoms rendered by setStyle pixel-for-pixel.
+  var VDW3D = {H:1.2,He:1.4,Li:1.82,Be:1.53,B:1.92,C:1.7,N:1.55,O:1.52,F:1.47,Ne:1.54,Na:2.27,
+    Mg:1.73,Al:1.84,Si:2.1,P:1.8,S:1.8,Cl:1.75,Ar:1.88,K:2.75,Ca:2.31,Ni:1.63,Cu:1.4,Zn:1.39,
+    Ga:1.87,Ge:2.11,As:1.85,Se:1.9,Br:1.85,Kr:2.02,Rb:3.03,Sr:2.49,Pd:1.63,Ag:1.72,Cd:1.58,
+    In:1.93,Sn:2.17,Sb:2.06,Te:2.06,I:1.98,Xe:2.16,Cs:3.43,Ba:2.68,Pt:1.75,Au:1.66,Hg:1.55,
+    Tl:1.96,Pb:2.02,Bi:2.07,Po:1.97,At:2.02,Rn:2.2,Fr:3.48,Ra:2.83,U:1.86};
+  function pieRadius(e){
+    var r = VDW3D[e] || 1.5;
+    return state.style === 'sphere' ? r*0.85 : state.style === 'bs' ? r*0.28 : 0.26;
+  }
+  function addSector(cx, cy, cz, r, p0, p1, col){
+    var NS = 14, NP = Math.max(3, Math.round(28*(p1 - p0)/(2*Math.PI)));
+    var verts = [], norms = [], faces = [];
+    for (var i = 0; i <= NS; i++) {
+      var th = Math.PI*i/NS, st = Math.sin(th), ct = Math.cos(th);
+      for (var j = 0; j <= NP; j++) {
+        var ph = p0 + (p1 - p0)*j/NP;
+        var nx = st*Math.cos(ph), ny = st*Math.sin(ph), nz = ct;
+        verts.push({x: cx + r*nx, y: cy + r*ny, z: cz + r*nz});
+        norms.push({x: nx, y: ny, z: nz});
+      }
+    }
+    for (var i2 = 0; i2 < NS; i2++) for (var j2 = 0; j2 < NP; j2++) {
+      var va = i2*(NP + 1) + j2, vb = va + NP + 1;
+      faces.push(va, vb, va + 1, va + 1, vb, vb + 1);
+    }
+    viewer.addCustom({vertexArr: verts, normalArr: norms, faceArr: faces, color: col});
+  }
+  function drawPieSphere(cx, cy, cz, r, species){
+    var tot = 0; species.forEach(function(s){ tot += s.o; });
+    var segs = species.map(function(s){ return {col: elemColor(s.e), f: s.o}; });
+    if (tot < 0.995) segs.push({col: state.dark ? 0x9aa4b2 : 0xf0f0f0, f: 1 - tot});  // vacancy
+    var T = Math.max(tot, 1), phi = -Math.PI/2;
+    segs.forEach(function(seg){
+      var dphi = 2*Math.PI*seg.f/T;
+      addSector(cx, cy, cz, r, phi, phi + dphi, seg.col);
+      phi += dphi;
+    });
+  }
+  function addCellBox(cell, na, nb, nc){
+    var O = [0,0,0];
+    var A = cell[0].map(function(x){ return x*na; }), B = cell[1].map(function(x){ return x*nb; }),
+        C = cell[2].map(function(x){ return x*(nc || 1); });
+    function add(p, q){
+      viewer.addCylinder({start:{x:p[0],y:p[1],z:p[2]}, end:{x:q[0],y:q[1],z:q[2]}, radius:0.03, color:0x888888, fromCap:1, toCap:1});
+    }
+    function plus(){ var r=[0,0,0]; for (var k=0;k<arguments.length;k++){ r[0]+=arguments[k][0]; r[1]+=arguments[k][1]; r[2]+=arguments[k][2]; } return r; }
+    add(O,A); add(O,B); add(O,C);
+    add(A,plus(A,B)); add(A,plus(A,C)); add(B,plus(A,B)); add(B,plus(B,C)); add(C,plus(A,C)); add(C,plus(B,C));
+    add(plus(A,B),plus(A,B,C)); add(plus(A,C),plus(A,B,C)); add(plus(B,C),plus(A,B,C));
+  }
+
+  var cviewer = null, _lastQ = '', _compassCell = '';
+  function ensureCompass(cell){
+    var el = document.getElementById('compass');
+    if (!state.axes || !cell) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    if (!cviewer) {
+      cviewer = $3Dmol.createViewer('compass', {backgroundColor: '#000000', backgroundAlpha: 0.0,
+                                                orthographic: true, nomouse: true});
+    }
+    var key = JSON.stringify(cell);
+    if (key !== _compassCell) {
+      _compassCell = key;
+      cviewer.removeAllShapes(); cviewer.removeAllLabels();
+      var cols = [0xd94b4b, 0x3fae4a, 0x4b6bd9], names = ['a', 'b', 'c'];
+      for (var k = 0; k < 3; k++) {
+        var v = cell[k], n = Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]) || 1;
+        var e = [v[0]/n, v[1]/n, v[2]/n];
+        cviewer.addArrow({start:{x:0,y:0,z:0}, end:{x:e[0],y:e[1],z:e[2]}, radius:0.07, radiusRatio:2.4, mid:0.8, color:cols[k]});
+        cviewer.addLabel(names[k], {position:{x:e[0]*1.35, y:e[1]*1.35, z:e[2]*1.35}, fontSize:14,
+                                    fontColor:'#'+('00000'+cols[k].toString(16)).slice(-6),
+                                    backgroundOpacity:0, inFront:true});
+      }
+      cviewer.zoomTo(); cviewer.zoom(0.75); cviewer.render();
+    }
+  }
+  // keep the compass rotation synced to the main viewer (quaternion copy; zoom/pan ignored)
+  setInterval(function(){
+    if (!cviewer || !viewer || !state.axes) return;
+    try {
+      var v = viewer.getView();
+      var q = v[4] + ',' + v[5] + ',' + v[6] + ',' + v[7];
+      if (q === _lastQ) return;
+      _lastQ = q;
+      var cv = cviewer.getView();
+      cviewer.setView([0, 0, 0, cv[3], v[4], v[5], v[6], v[7]]);
+    } catch(e){}
+  }, 90);
+
+  function build(){
+    viewer.removeAllModels(); viewer.removeAllShapes(); viewer.removeAllLabels();
+    if (useNative) { buildNative(); return; }
+    var fr = S.frames[state.frame];
+    var cell = fr.cell || S.cell;
+    var bonds = fr._bonds || (fr._bonds = computeBonds(fr, cell));
+    var na = cell ? state.na : 1, nb = cell ? state.nb : 1, nc = cell ? state.nc : 1;
+    var n = fr.elems.length;
+
+    // ---- rendered instances = replicas + BOUNDARY GHOSTS (Materials-Studio edge atoms):
+    // periodic images landing within EDGE (Å) of the displayed box are drawn too, so atoms
+    // sitting on/near a cell face appear on BOTH faces. Keyed by full image shift (sa,sb,sc).
+    var EDGE = 0.1;
+    var atoms = [], id = {}, nGhost = 0, instSite = [];
+    function key(i, sa, sb, sc){ return i + ',' + sa + ',' + sb + ',' + sc; }
+    function addInstance(i, sa, sb, sc){
+      var p = fr.pos[i];
+      var sh = cell ? [sa*cell[0][0]+sb*cell[1][0]+sc*cell[2][0],
+                       sa*cell[0][1]+sb*cell[1][1]+sc*cell[2][1],
+                       sa*cell[0][2]+sb*cell[1][2]+sc*cell[2][2]] : [0,0,0];
+      id[key(i, sa, sb, sc)] = atoms.length;
+      instSite.push(i);
+      atoms.push({elem: fr.elems[i], x: p[0]+sh[0], y: p[1]+sh[1], z: p[2]+sh[2], bonds: [], bondOrder: [], serial: atoms.length});
+    }
+    for (var rc = 0; rc < nc; rc++) for (var rb = 0; rb < nb; rb++) for (var ra = 0; ra < na; ra++)
+      for (var i = 0; i < n; i++) addInstance(i, ra, rb, rc);
+    if (cell) {
+      // fractional coords + per-axis margins from perpendicular widths
+      var M = [[cell[0][0],cell[1][0],cell[2][0]],[cell[0][1],cell[1][1],cell[2][1]],[cell[0][2],cell[1][2],cell[2][2]]];
+      var invC = matInv3(M);
+      function crossV(u,v){ return [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]]; }
+      function dotV(u,v){ return u[0]*v[0]+u[1]*v[1]+u[2]*v[2]; }
+      var volC = Math.abs(dotV(cell[0], crossV(cell[1], cell[2])));
+      var eps = [0,1,2].map(function(k){
+        var w = volC / Math.sqrt(dotV(crossV(cell[(k+1)%3], cell[(k+2)%3]), crossV(cell[(k+1)%3], cell[(k+2)%3])));
+        return EDGE / w;
+      });
+      for (var i2 = 0; i2 < n; i2++) {
+        var fF = mvec(invC, fr.pos[i2]);
+        for (var ga = -1; ga <= na; ga++) for (var gb = -1; gb <= nb; gb++) for (var gc = -1; gc <= nc; gc++) {
+          if (ga >= 0 && ga < na && gb >= 0 && gb < nb && gc >= 0 && gc < nc) continue;   // already a replica
+          var fa = fF[0]+ga, fb = fF[1]+gb, fc = fF[2]+gc;
+          if (fa >= -eps[0] && fa <= na+eps[0] && fb >= -eps[1] && fb <= nb+eps[1] && fc >= -eps[2] && fc <= nc+eps[2]) {
+            addInstance(i2, ga, gb, gc); nGhost++;
+          }
+        }
+      }
+    }
+    // ---- adjacency per original atom (both directions), then native bonds / stubs per instance
+    var adj = [];
+    for (var ii = 0; ii < n; ii++) adj.push([]);
+    bonds.forEach(function(b){
+      adj[b.i].push({j: b.j, s: b.s});
+      if (b.i !== b.j || b.s[0] || b.s[1] || b.s[2])
+        adj[b.j].push({j: b.i, s: [-b.s[0], -b.s[1], -b.s[2]]});
+    });
+    var stubs = [];
+    Object.keys(id).forEach(function(k){
+      var parts = k.split(',').map(Number), i = parts[0], S = [parts[1], parts[2], parts[3]];
+      var sidx = id[k], src = atoms[sidx];
+      adj[i].forEach(function(e){
+        var T = [S[0]+e.s[0], S[1]+e.s[1], S[2]+e.s[2]];
+        var t = id[key(e.j, T[0], T[1], T[2])];
+        if (t !== undefined) {
+          if (t > sidx) {  // once per pair, symmetric (3Dmol draws sticks as two half-bonds)
+            atoms[sidx].bonds.push(t); atoms[sidx].bondOrder.push(1);
+            atoms[t].bonds.push(sidx); atoms[t].bondOrder.push(1);
+          }
+        } else if (state.pbc && cell) {
+          var img = [fr.pos[e.j][0] + T[0]*cell[0][0] + T[1]*cell[1][0] + T[2]*cell[2][0],
+                     fr.pos[e.j][1] + T[0]*cell[0][1] + T[1]*cell[1][1] + T[2]*cell[2][1],
+                     fr.pos[e.j][2] + T[0]*cell[0][2] + T[1]*cell[1][2] + T[2]*cell[2][2]];
+          stubs.push({from: [src.x, src.y, src.z], to: [(src.x+img[0])/2, (src.y+img[1])/2, (src.z+img[2])/2], elem: src.elem});
+        }
+      });
+    });
+    var m = viewer.addModel();
+    m.addAtoms(atoms);
+    viewer.setStyle({}, styles()[state.style]);
+    // ---- per-element style overrides (e.g. substrate spacefill + adsorbate ball&stick). Applied
+    // AFTER the global style; {elem:E} selects every instance of E (replicas + boundary ghosts).
+    (function(){
+      var sset = styles();
+      Object.keys(state.elemStyle).forEach(function(E){
+        var s = state.elemStyle[E];
+        viewer.setStyle({elem: E}, s === 'hide' ? {} : (sset[s] || {}));
+      });
+    })();
+
+    // ---- disordered sites -> VESTA pie spheres (every instance, ghosts included);
+    // their plain single-color spheres are suppressed (sticks kept) so the pie replaces them.
+    var fsites = fr.sites || [];
+    var disSerials = [];
+    for (var dii = 0; dii < atoms.length; dii++) if (fsites[instSite[dii]]) disSerials.push(dii);
+    if (disSerials.length) {
+      var stySet = styles()[state.style];
+      viewer.setStyle({serial: disSerials}, stySet.stick ? {stick: stySet.stick} : {});
+      disSerials.forEach(function(di2){
+        var si = instSite[di2], a2 = atoms[di2];
+        drawPieSphere(a2.x, a2.y, a2.z, pieRadius(fr.elems[si]), fsites[si]);
+      });
+    }
+
+    // ---- OVITO-style all-frames overlay: mobile atoms at every frame position + trajectory lines
+    var nMob = 0;
+    if (state.overlay && S.frames.length > 1) {
+      if (!S._mobile) {   // atoms displaced > 0.5 A from frame-0 in ANY frame (computed once)
+        var ref = S.frames[0].pos, mob = [];
+        for (var im = 0; im < ref.length; im++) {
+          var dmax = 0;
+          S.frames.forEach(function(ff){
+            if (ff.pos.length !== ref.length) return;
+            var dxm = ff.pos[im][0]-ref[im][0], dym = ff.pos[im][1]-ref[im][1], dzm = ff.pos[im][2]-ref[im][2];
+            dmax = Math.max(dmax, dxm*dxm + dym*dym + dzm*dzm);
+          });
+          if (dmax > 0.25) mob.push(im);
+        }
+        S._mobile = mob;
+      }
+      nMob = S._mobile.length;
+      var ovAtoms = [];
+      S.frames.forEach(function(ff, fi){
+        if (fi === state.frame || ff.pos.length !== fr.pos.length) return;
+        S._mobile.forEach(function(im){
+          ovAtoms.push({elem: ff.elems[im], x: ff.pos[im][0], y: ff.pos[im][1], z: ff.pos[im][2],
+                        bonds: [], bondOrder: [], serial: ovAtoms.length});
+        });
+      });
+      if (ovAtoms.length) {
+        var m2 = viewer.addModel();
+        m2.addAtoms(ovAtoms);
+        var ovSty = {sphere: {scale: 0.13}};
+        if (state.scheme === 'vesta') ovSty.sphere.colorscheme = {prop:'elem', map:VESTA};
+        viewer.setStyle({model: m2}, ovSty);
+      }
+      // trajectory lines through consecutive frame positions of each mobile atom
+      S._mobile.forEach(function(im){
+        for (var fi = 0; fi < S.frames.length - 1; fi++) {
+          var p1 = S.frames[fi].pos[im], p2 = S.frames[fi+1].pos[im];
+          if (!p1 || !p2) continue;
+          viewer.addCylinder({start:{x:p1[0],y:p1[1],z:p1[2]}, end:{x:p2[0],y:p2[1],z:p2[2]},
+                              radius: 0.03, color: elemColor(S.frames[0].elems[im]), fromCap: 1, toCap: 1});
+        }
+      });
+    }
+    stubs.forEach(function(st){
+      var esty = state.elemStyle[st.elem] || state.style;   // per-element effective style
+      if (esty === 'sphere' || esty === 'hide') return;      // no bond stubs for spacefill/hidden atoms
+      viewer.addCylinder({start:{x:st.from[0],y:st.from[1],z:st.from[2]}, end:{x:st.to[0],y:st.to[1],z:st.to[2]},
+                          radius: styles()[esty].stick.radius, color: elemColor(st.elem), fromCap: 1, toCap: 0});
+    });
+    if (state.cell && cell) addCellBox(cell, na, nb, nc);
+    ensureCompass(cell);
+    viewer.setBackgroundColor(state.dark ? 0x1b2430 : 0xffffff);
+    if (firstDraw) { viewer.zoomTo(); firstDraw = false; } viewer.render();
+    // composition: disordered sites contribute fractional (occupancy-weighted) counts
+    var cnt = {};
+    fr.elems.forEach(function(e, ci){
+      var sp = fsites[ci];
+      if (!sp) cnt[e] = (cnt[e]||0) + 1;
+      else sp.forEach(function(s){ cnt[s.e] = (cnt[s.e]||0) + s.o; });
+    });
+    function fmtCnt(v){ return Math.abs(v - Math.round(v)) < 0.005 ? String(Math.round(v)) : v.toFixed(2); }
+    var formula = Object.keys(cnt).sort().map(function(e){ var v = fmtCnt(cnt[e]); return e + (v === '1' ? '' : v); }).join(' ');
+    // element legend (swatches follow the active color scheme; counts = one cell)
+    var lg = document.getElementById('legend');
+    lg.style.display = 'flex';
+    var STYLE_LBL = {sphere:'spacefill', bs:'ball&stick', stick:'stick', hide:'hidden'};
+    lg.innerHTML = Object.keys(cnt).sort().map(function(e){
+      var hex = '#' + ('00000' + elemColor(e).toString(16)).slice(-6);
+      var ov = state.elemStyle[e];
+      return '<span class="lgi" data-el="' + e + '" title="click to cycle drawing style for ' + e
+        + ' (spacefill / ball&amp;stick / stick / hidden / default)">'
+        + '<span class="sw" style="background:' + hex + (ov ? ';outline:2px solid #ffd123;outline-offset:1px' : '') + '"></span>'
+        + e + ' (' + fmtCnt(cnt[e]) + ')' + (ov ? ' <span class="ovl">' + STYLE_LBL[ov] + '</span>' : '') + '</span>';
+    }).join('');
+    document.getElementById('meta').innerHTML = formula + ' &middot; ' + atoms.length + ' atoms'
+      + (nGhost ? ' (' + nGhost + ' edge)' : '') + ' &middot; '
+      + bonds.length + ' bonds' + (stubs.length ? ' &middot; ' + stubs.length + ' pbc stubs' : '')
+      + (fr.nDis ? ' &middot; ' + fr.nDis + ' disordered sites/cell (pie = occupancy)' : '')
+      + (nMob ? ' &middot; overlay: ' + nMob + ' mobile' : '')
+      + (S.frames.length > 1 ? ' &middot; frame ' + (state.frame+1) + '/' + S.frames.length : '') + ' &middot; ' + fmt.toUpperCase();
+  }
+  function buildNative(){
+    var m = (S && S.frames.length > 1) ? viewer.addModelsAsFrames(rawTxt, fmt) : viewer.addModel(rawTxt, fmt);
+    try { if (state.na > 1 || state.nb > 1 || state.nc > 1) viewer.replicateUnitCell(state.na, state.nb, state.nc, m); } catch(e){}
+    document.getElementById('legend').style.display = 'none';
+    viewer.setStyle({}, styles()[state.style]);
+    (function(){ var sset = styles(); Object.keys(state.elemStyle).forEach(function(E){
+      var s = state.elemStyle[E]; viewer.setStyle({elem: E}, s === 'hide' ? {} : (sset[s] || {})); }); })();
+    try { if (state.cell) viewer.addUnitCell(m, {box:{color:0x777777}}); } catch(e){}
+    viewer.setBackgroundColor(state.dark ? 0x1b2430 : 0xffffff);
+    if (firstDraw) { viewer.zoomTo(); firstDraw = false; } viewer.render();
+    document.getElementById('meta').innerHTML = 'native renderer (PBC bonds unavailable for this file)';
+  }
+  function setBtn(id, on){ document.getElementById(id).className = on ? 'on' : ''; }
+  function makeViewer(){
+    // (re)create the viewer — 3Dmol has no runtime ortho/persp switch, so projection changes rebuild it
+    document.getElementById('viewer').innerHTML = '';
+    viewer = $3Dmol.createViewer('viewer', {backgroundColor: state.dark ? '#1b2430' : '#ffffff',
+                                            orthographic: state.ortho});
+  }
+
+  fetch(f).then(function(r){
+    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+    return r.text();
+  }).then(function(txt){
+    rawTxt = txt;
+    try {
+      S = fmt === 'cif' ? parseCIF(txt) : fmt === 'vasp' ? parsePOSCAR(txt) : parseXYZ(txt);
+    } catch(e) { S = {frames:[1]}; useNative = true; }
+    if (!useNative && !S.cell && !S.frames[0].cell) { state.cell = false; state.pbc = false;
+      ['na','nb','nc','bondf'].forEach(function(x){ document.getElementById(x).disabled = true; });
+      document.getElementById('pbcbtn').disabled = true; document.getElementById('axesbtn').disabled = true; state.axes = false; }
+    makeViewer();
+    build();
+    setBtn('cellbtn', state.cell); setBtn('pbcbtn', state.pbc); setBtn('axesbtn', state.axes);
+    var nf = useNative ? 1 : S.frames.length;
+    if (nf > 1) {
+      var fb = document.getElementById('framebar'); fb.style.display = 'flex';
+      var slider = document.getElementById('frame'); slider.max = nf - 1;
+      var fnum = document.getElementById('fnum');
+      function show(i){ fnum.textContent = (i+1) + '/' + nf; }
+      show(0);
+      slider.addEventListener('input', function(){
+        stopPlay(); state.frame = parseInt(slider.value); build(); show(state.frame);
+      });
+      function stopPlay(){ state.playing = false; if (state.timer) clearInterval(state.timer);
+        document.getElementById('playbtn').innerHTML = '&#9654;'; }
+      document.getElementById('playbtn').addEventListener('click', function(){
+        if (state.playing) { stopPlay(); return; }
+        state.playing = true; this.innerHTML = '&#10074;&#10074;';
+        var dir = 1;
+        state.timer = setInterval(function(){
+          state.frame += dir;
+          if (state.frame >= nf - 1) { state.frame = nf - 1; dir = -1; }
+          else if (state.frame <= 0) { state.frame = 0; dir = 1; }
+          slider.value = state.frame; build(); show(state.frame);
+        }, 180);
+      });
+    }
+  }).catch(function(e){
+    document.getElementById('stage').innerHTML = '<div id="err">Could not load <b>' + f + '</b> — ' + e.message + '</div>';
+  });
+
+  document.getElementById('style').addEventListener('change', function(){ state.style = this.value; build(); });
+  document.getElementById('scheme').addEventListener('change', function(){ state.scheme = this.value; build(); });
+  document.getElementById('proj').addEventListener('change', function(){
+    state.ortho = (this.value === 'ortho');
+    var v = null; try { v = viewer.getView(); } catch(e){}
+    makeViewer(); build();
+    if (v) { try { viewer.setView(v); viewer.render(); } catch(e){} }
+  });
+  document.getElementById('cellbtn').addEventListener('click', function(){ state.cell = !state.cell; setBtn('cellbtn', state.cell); build(); });
+  document.getElementById('axesbtn').addEventListener('click', function(){ state.axes = !state.axes; setBtn('axesbtn', state.axes); build(); });
+  ['na', 'nb', 'nc'].forEach(function(x){
+    document.getElementById(x).addEventListener('change', function(){
+      var v = Math.max(1, Math.min(5, parseInt(this.value) || 1));
+      this.value = v; state[x] = v; build();
+    });
+  });
+  document.getElementById('ovlbtn').addEventListener('click', function(){
+    state.overlay = !state.overlay; setBtn('ovlbtn', state.overlay); build();
+  });
+  document.getElementById('bondf').addEventListener('change', function(){
+    var v = Math.max(0.8, Math.min(1.6, parseFloat(this.value) || 1.0));
+    this.value = v; state.bondf = v;
+    if (S && S.frames) S.frames.forEach(function(fr){ delete fr._bonds; });   // invalidate bond cache
+    build();
+  });
+  document.getElementById('pbcbtn').addEventListener('click', function(){ state.pbc = !state.pbc; setBtn('pbcbtn', state.pbc); build(); });
+  // click a legend entry to cycle THAT element's drawing style: default -> spacefill -> ball&stick -> stick -> hidden
+  document.getElementById('legend').addEventListener('click', function(ev){
+    var t = ev.target; while (t && t !== this && !(t.dataset && t.dataset.el)) t = t.parentNode;
+    if (!t || !t.dataset || !t.dataset.el) return;
+    var e = t.dataset.el, cyc = [null, 'sphere', 'bs', 'stick', 'hide'];
+    var ni = (cyc.indexOf(state.elemStyle[e] || null) + 1) % cyc.length;
+    if (cyc[ni]) state.elemStyle[e] = cyc[ni]; else delete state.elemStyle[e];
+    build();
+  });
+  document.getElementById('bgbtn').addEventListener('click', function(){ state.dark = !state.dark; build(); });
+  document.getElementById('resetbtn').addEventListener('click', function(){ viewer.zoomTo(); viewer.render(); });
+})();
+</script>
+</body>
+</html>

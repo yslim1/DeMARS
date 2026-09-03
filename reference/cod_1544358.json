@@ -1,0 +1,37 @@
+{
+ "entry": "cod_1544358",
+ "exact": {
+  "formula": "Fe3O8Sr3",
+  "n_atoms_template": 160,
+  "n_total": 8,
+  "representative_charge": 0.0,
+  "representative_composition": {
+   "Fe": 24,
+   "O": 64,
+   "Sr": 24
+  },
+  "representative_n_atoms": 112,
+  "status": "de-averaged",
+  "supercell": [
+   2,
+   1,
+   2
+  ]
+ },
+ "reported": {
+  "n_relaxed": 8,
+  "spread_meV": 28.9
+ },
+ "settings": {
+  "final": false,
+  "max_rounds": 1,
+  "min_cell": 8.0,
+  "n_samples": 6
+ },
+ "stamped_sha256": "75d9a06c843e1c2c6aaa6435407cf9ace0b3dba85c3271a3a0c7da5170d1cf17",
+ "stamped_with": "checkpoint_7net_nano_5.5.pth",
+ "tolerant": {
+  "E_tol_meV_per_atom": 20.0,
+  "ground_E_per_atom": -6.4411
+ }
+}
