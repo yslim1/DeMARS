@@ -55,7 +55,7 @@ ls ~/icsd_db 2>/dev/null; python3 version/check_version.py verify
 ```
 If `demars.yaml` exists → run `assets/setup/doctor.sh` first and go straight to whatever it flags.
 
-**1. Environment.** Ask (one `AskUserQuestion`, multiple questions): conda or venv; env name
+**1. Environment.** Ask once for: conda or venv; env name
 (default `demars`); GPU present → CUDA torch tag (`cu128` is right for current drivers; `cpu` for
 a CPU-only box; `skip` if they insist torch is already handled). If they already have a demars env,
 skip creation and verify the interpreter they name instead.

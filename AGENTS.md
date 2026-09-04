@@ -5,13 +5,13 @@ De-average disordered crystals into Minimal Atomistic Representations (MARs).
 - `demars-core/` — the deterministic engine, installed editable as `demars_core`. **Never guess the
   env**: `paths.python` in `demars.yaml` is the only place it is written down, and `tools/py` reads it.
 - `tools/` — file-based CLI wrappers over it (the stage ①→⑥ contracts). See `tools/README.md`.
-- `.claude/` — the LLM judgment layer: `mar-analyst` (builds the MAR) and `mar-reviewer`
-  (adversarial check). Code proves; the analyst judges.
+- `.agents/skills/` and `.codex/agents/` — the LLM judgment layer: `mar-analyst` (builds the MAR)
+  and `mar-reviewer` (adversarial check). Code proves; the analyst judges.
 - `episodes/` — what earlier entries taught the program, keyed by the engine flag that calls each
   one up. `lesson` is what applies; `provenance` is the audit trail. See `episodes/README.md`.
 - `demars-core/docs/DEFECTS.md` — what every `D<n>` cited in the code and tests means.
 - `version/` — when protected code may change (`state.json.mode`), enforced by the hooks in
-  `.claude/settings.json`. See `version/README.md`.
+  `.codex/hooks.json`. See `version/README.md`.
 - `assets/` — `demars.yaml.example`, setup scripts, SLURM templates, the local ICSD indexer.
 - `reference/` — stored answers for `tools/demars_reference.py`'s install self-check.
 
@@ -38,7 +38,7 @@ When the user says **"deaverage <file>"** — or any equivalent ("de-average X.c
 pipeline on X", "build a MAR for X", "what's the disorder in X") — run the full pipeline without
 asking follow-up questions. Fill in the defaults below and go.
 
-1. **Launch the `mar-analyst` agent** on that file, in the background, with:
+1. **Spawn the project custom agent `mar-analyst`** on that file, in the background, with:
    - out dir `runs/<cif-stem>/` (create it; `<cif-stem>` = filename without extension)
    - production settings: `--nr 30 --min-nm 1.5 --final`
    - `--icsd-id N` **if** the filename or the user identifies it as an ICSD entry
@@ -52,7 +52,8 @@ asking follow-up questions. Fill in the defaults below and go.
      leaves it `not_run` = UNCHECKED. It **reports and does not judge** unless
      `hull.tol_eV_per_atom` is set, so quote `E_above_hull` and interpret it; never call a
      `pass: null` hull gate clean. If the artifact comes back `not_run` (no MP key), say that.
-2. **Then launch the `mar-reviewer` agent** on the finished `runs/<cif-stem>/record.json`.
+2. **Then spawn a fresh project custom agent `mar-reviewer`** on the finished
+   `runs/<cif-stem>/record.json`.
    Fresh context — never pass it the analyst's reasoning. Save its output verbatim to
    `runs/<cif-stem>/review.json`.
 3. **ONE round. Report the verdict — do NOT re-run the analyst.** analyst → reviewer, and stop.
@@ -99,7 +100,7 @@ calculator. If they say "screening" or "quick", drop to `--nr 12 --min-nm 1.0` a
 analyst to record that in `decision_trace` and cap `confidence`.
 
 **More than one structure** — a directory ("deaverage the structures in `A/`"), a glob, or several
-named files — is a batch: **invoke the `mar-batch` skill** and follow it. It partitions the list and
+named files — is a batch: **invoke the `$mar-batch` skill** and follow it. It partitions the list and
 may run entries in parallel (each entry standalone; analyst → reviewer stays ordered within one),
 logs every result and failure as it goes, and continues past errors. Do not improvise a batch loop
 without it.

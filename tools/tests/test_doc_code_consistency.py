@@ -23,7 +23,7 @@ from demars_core._engine import mar_engine as ME       # noqa: E402
 
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
-SKILLS = os.path.join(ROOT, '.claude', 'skills', 'mar-analyst')
+SKILLS = os.path.join(ROOT, '.agents', 'skills', 'mar-analyst')
 
 
 def _read(*parts):
@@ -34,7 +34,7 @@ def _read(*parts):
 def test_the_atom_budget_quoted_in_strategy_is_the_one_the_engine_enforces():
     """`strategy.md` drives the analyst's cell decisions, so a stale budget there produces cells
     the engine then silently cuts (defect D13, from the other end)."""
-    txt = _read('.claude', 'skills', 'mar-analyst', 'strategy.md')
+    txt = _read('.agents', 'skills', 'mar-analyst', 'strategy.md')
 
     quoted = {int(m) for m in re.findall(r'`?MAXAT\s*=\s*(\d+)`?', txt)}
     assert quoted == {ME.MAXAT}, f'strategy.md quotes MAXAT={quoted}, code has {ME.MAXAT}'
@@ -46,14 +46,14 @@ def test_the_atom_budget_quoted_in_strategy_is_the_one_the_engine_enforces():
 
 def test_the_docs_do_not_deny_a_capability_the_package_has():
     """`tools.md` told the analyst to leave `sibling_comparison` null "— no sibling DB" while the
-    same file documented the sibling ΔE workflow twenty lines earlier. CLAUDE.md's whole point is
+    same file documented the sibling ΔE workflow twenty lines earlier. AGENTS.md's whole point is
     that *unchecked* and *checked-and-absent* are different answers; a doc that says the search
     cannot run makes every analyst report the first when the truth is the second."""
-    txt = _read('.claude', 'skills', 'mar-analyst', 'tools.md')
+    txt = _read('.agents', 'skills', 'mar-analyst', 'tools.md')
     assert 'ordered_sibling_ids' in txt, 'fixture check: this file should document the search'
 
     # "no sibling DB" is ALSO the sentinel the evidence bundle emits when the search really was not
-    # run, and tools.md has to document that string -- CLAUDE.md's unchecked-vs-absent distinction
+    # run, and tools.md has to document that string -- AGENTS.md's unchecked-vs-absent distinction
     # lives in it. So flag the phrase only where it is the doc speaking, not quoting.
     for i, line in enumerate(txt.splitlines(), 1):
         if 'sibling db' not in line.lower():

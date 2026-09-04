@@ -86,7 +86,7 @@ def _stamp_sibling(ej, sib_ev, icsd_id=None):
     `not_run`. We re-run it out here and overwrite the value -- and used to leave the inner
     provenance behind, so one file said the search both happened (a searched-and-absent string)
     and never ran (`states.ordered_sibling == 'not_run'`, still listed in `unconfident`). Those are
-    exactly the two states CLAUDE.md forbids collapsing, and a reviewer who read the honest field
+    exactly the two states AGENTS.md forbids collapsing, and a reviewer who read the honest field
     spent a whole round refuting a run that had in fact been given `--icsd-id`.
 
     `icsd_id` is stamped for the same reason: without it, a run WITH self-exclusion and a run

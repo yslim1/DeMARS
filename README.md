@@ -13,19 +13,19 @@ The package has two layers, and the split is the point:
 | layer | what it is | where |
 |---|---|---|
 | **engine** | deterministic. Enumerates decorations, relaxes them on a universal MLIP, recomputes the gates. No LLM, no proprietary data. | `demars-core/` (pip-installable `demars_core`), `tools/` (file-based stage CLIs) |
-| **judgment** | an LLM analyst that reads the CIF's own evidence, decides the disorder mechanism and how to build for it, plus an adversarial reviewer that tries to refute the result | `.claude/skills/`, `.claude/agents/` |
+| **judgment** | an LLM analyst that reads the CIF's own evidence, decides the disorder mechanism and how to build for it, plus an adversarial reviewer that tries to refute the result | `.agents/skills/`, `.codex/agents/` |
 
 **Code proves; the analyst judges.** Every number in a record comes from the engine; the skills
 decide what to build and what it means, and the reviewer independently attacks it.
 
-You can use the engine completely on its own. The judgment layer needs [Claude
-Code](https://claude.com/claude-code) and is what turns a hard structure into a defensible one.
+You can use the engine completely on its own. The judgment layer needs Codex and is what turns a
+hard structure into a defensible one.
 
 ---
 
 ## Install
 
-In Claude Code, `/setup` walks through everything below — env, `demars.yaml`, the optional ICSD
+In Codex, `$setup` walks through everything below — env, `demars.yaml`, the optional ICSD
 index, and a verification pass (`assets/setup/`, scripts usable on their own). By hand:
 
 ```bash
@@ -44,7 +44,7 @@ Optional extras, both **off by default** because they build from source against 
 `[oeq]` and `[cueq]` install SevenNet's fused-kernel backends for `compute.accelerator` in the config.
 
 **Distribution is this repository, as a git clone** — not a standalone wheel, and not a source zip.
-The methodology lives in `.claude/`, which a wheel does not carry, and the version gate in
+The methodology lives in `.agents/` and `.codex/`, which a wheel does not carry, and the version gate in
 `version/` verifies the checkout against its release tag before it lets the analyst run, so a
 download without `.git` can drive the engine but not the judgment layer.
 
@@ -101,14 +101,14 @@ is simple — one substitutional sublattice, no molecular ions, no split sites y
 
 ## Run one structure — the full pipeline
 
-Evidence → mechanism → build → gates → adversarial review → a `record.json`. In Claude Code, from the
+Evidence → mechanism → build → gates → adversarial review → a `record.json`. In Codex, from the
 repo root:
 
 ```
 deaverage demars-core/tests/fixtures/cod_4000330.cif
 ```
 
-`CLAUDE.md` defines that trigger: analyst → reviewer, **one round** → a stage-⑥ record (see
+`AGENTS.md` defines that trigger: analyst → reviewer, **one round** → a stage-⑥ record (see
 *Keep the one-round rule* below). Single stages are documented in `tools/README.md`.
 
 > **Three files, three names, no shared stem.** `engine.json` = the stage-③ contract ·
@@ -196,8 +196,8 @@ in this order of preference:
 |---|---|---|
 | reducible to a rule | deterministic code | `mar_engine.ship_candidates()` |
 | checkable after the fact | a gate | `gates.connectivity`, `gates.sqs` |
-| a judgment the engine cannot make | the doctrine in `.claude/skills/` | `strategy.md`, `taxonomy.md` |
-| a procedure a run must follow | `CLAUDE.md` / the batch skill | the one-round rule itself |
+| a judgment the engine cannot make | the doctrine in `.agents/skills/` | `strategy.md`, `taxonomy.md` |
+| a procedure a run must follow | `AGENTS.md` / the batch skill | the one-round rule itself |
 
 **Record the episode too, and record it first.** `episodes/` is where an experience is kept in the
 form that can be applied to a new entry: keyed by the engine flag that should call it up
@@ -245,13 +245,13 @@ not just the verdicts.
 |---|---|
 | `demars-core/README.md` | the engine: Python API, CLI, MLIP backends, troubleshooting |
 | `tools/README.md` | the stage-①→⑥ file contracts the agents orchestrate |
-| `CLAUDE.md` | the trigger, the defaults, the facts that bite |
-| `version/README.md` | when protected code may change: the `frozen` / `mutable` modes, release tags, and the hooks in `.claude/settings.json` that check them |
+| `AGENTS.md` | the trigger, the defaults, the facts that bite |
+| `version/README.md` | when protected code may change: the `frozen` / `mutable` modes, release tags, and the hooks in `.codex/hooks.json` that check them |
 | `assets/` | `demars.yaml.example`, `setup/` (env, config, doctor), `slurm/` (job templates), `icsd_query/` (the local ICSD indexer and CLI) |
 | `reference/` | the stored answers `tools/demars_reference.py` checks a fresh install against |
-| `.claude/skills/mar-analyst/` | the methodology: `taxonomy.md` (mechanism classes A–F), `strategy.md`, `principles.md`, `tools.md` — **edit these to change how the analyst judges** |
-| `.claude/skills/mar-reviewer/` | what an adversarial review must attack — **edit this to change what it refuses to accept** |
-| `.claude/skills/mar-batch/` | the batch protocol — partitioning, the append-only ledger, resuming after an interruption; **use it for more than one structure** |
+| `.agents/skills/mar-analyst/` | the methodology: `taxonomy.md` (mechanism classes A–F), `strategy.md`, `principles.md`, `tools.md` — **edit these to change how the analyst judges** |
+| `.agents/skills/mar-reviewer/` | what an adversarial review must attack — **edit this to change what it refuses to accept** |
+| `.agents/skills/mar-batch/` | the batch protocol — partitioning, the append-only ledger, resuming after an interruption; **use it for more than one structure** |
 | `episodes/` | what earlier entries taught it, keyed by the engine flag that calls each one up. `lesson` applies; `provenance` records the entries it was measured on, for auditing the de-identification |
 | `demars-core/docs/DEFECTS.md` | what every `D<n>` cited in the code and skills means, and which five numbers are burned |
 | `demars-core/tests/test_backtest_regressions.py`, `tools/tests/test_stage_contracts.py` | where the fixed defects are pinned: each `# ---- D<n>:` section states the failure it guards, and is the format to copy when you pin your own |
@@ -259,7 +259,7 @@ not just the verdicts.
 ## License
 
 **MIT** — see `LICENSE` at the repository root. It covers the whole distribution unit: the engine
-(`demars-core/`), the stage tools (`tools/`), the judgment layer (`.claude/`) and the episodes
+(`demars-core/`), the stage tools (`tools/`), the judgment layer (`.agents/` and `.codex/`) and the episodes
 (`episodes/`).
 
 Runtime dependencies are MIT/BSD, except ASE (LGPL-2.1-or-later), which imposes nothing on a

@@ -1,10 +1,9 @@
 ---
 name: mar-analyst
-# Background knowledge for the mar-analyst SUBAGENT, not a slash command. Typing /mar-analyst would
-# load this procedure inline in the main conversation -- which already holds whatever came before --
-# and the isolation the design depends on ("one analyst per entry, isolated context") would be gone.
-# Do NOT use `disable-model-invocation` here: it also blocks preloading into the subagent.
-user-invocable: false
+# Background knowledge for the mar-analyst custom agent, not the main conversation. Invoking
+# `$mar-analyst` directly after other case work would load this procedure into a context that
+# already holds prior answers and break the isolation the design depends on. The normal pipeline
+# instead spawns the project custom agent `mar-analyst`, which loads this skill before task work.
 description: >
   Per-entry disorder analyst for the DeMARS project. Given one disordered structure file (CIF),
   mine the CIF's intrinsic evidence, reason from the physical signals to a construction strategy,

@@ -1,0 +1,43 @@
+{
+  "description": "Verify DeMARS version state around execution and maturation work.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/version/check_version.py\" session-start",
+            "timeout": 30,
+            "statusMessage": "Checking DeMARS version state"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^Agent$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/version/check_version.py\" gate",
+            "timeout": 30,
+            "statusMessage": "Checking DeMARS agent mode"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/version/check_version.py\" stop",
+            "timeout": 30,
+            "statusMessage": "Checking DeMARS frozen state"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -18,6 +18,5 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}" || exit 1
 
 CIF="${1:?usage: sbatch single.j <structure.cif>}"
 
-export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
-
-claude -p "deaverage $CIF" --permission-mode auto
+codex exec --approve-for-me --dangerously-bypass-hook-trust \
+  "deaverage $CIF"

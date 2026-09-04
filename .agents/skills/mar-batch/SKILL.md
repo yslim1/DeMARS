@@ -61,7 +61,7 @@ previous entry — **but you can, and you write their launch prompts.** By entry
 finished answers, and one helpful clause ("another A-site disordered perovskite like the last few")
 contaminates an agent that is otherwise perfectly isolated.
 
-So the launch prompt is **fixed**: the file path, the out dir, and the `CLAUDE.md` defaults — nothing
+So the launch prompt is **fixed**: the file path, the out dir, and the `AGENTS.md` defaults — nothing
 else. No mention of any previous entry, its class, its verdict, or a pattern you think you are seeing
 across the batch. Do not summarise the run so far *to* an agent. If you notice a trend, it goes in
 your final report to the user, never into a prompt.
@@ -102,7 +102,7 @@ ledger row at all, which is what a session that died mid-entry leaves behind.
 Announce progress as you go — `[7/23] <filename>.cif`.
 
 Run the normal cycle (analyst → reviewer, **one round — no revise loop**, defaults from
-`CLAUDE.md`), and log **immediately after the review**, one row per entry (`--round 1`):
+`AGENTS.md`), and log **immediately after the review**, one row per entry (`--round 1`):
 
 ```bash
 python tools/batch_log.py <root>/_batch --file <cif> --status ok --rundir <root>/<stem> \
@@ -124,7 +124,7 @@ comes back `hull=not_run`, which is UNCHECKED and never a pass. If that state ne
 the campaign summary cannot show that it happened to every entry.
 
 A `revise` verdict is logged as `revise` and the entry is **done** — the analyst is not re-run
-(`CLAUDE.md` §3). That keeps the revise rate measurable across the campaign, which is the number
+(`AGENTS.md` §3). That keeps the revise rate measurable across the campaign, which is the number
 that says whether the analyst layer or the review layer needs work. `--round` stays in the schema so
 a ledger from a re-run pass (one the user asked for) can still be told apart.
 

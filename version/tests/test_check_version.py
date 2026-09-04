@@ -138,13 +138,13 @@ def test_frozen_version_detects_untracked_protected_files(tmp_path):
 def test_gate_allows_only_explicit_rehearsals_while_mutable(tmp_path, monkeypatch):
     write_state(tmp_path, state())
     production = {
-        "tool_name": "Agent",
-        "tool_input": {"subagent_type": "mar-analyst", "prompt": "Run the case"},
+        "tool_name": "spawn_agent",
+        "tool_input": {"agent_type": "mar-analyst", "message": "Run the case"},
     }
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(production)))
     assert check_version.gate(tmp_path) == 2
 
-    production["tool_input"]["prompt"] += "\nVERSION_MODE: rehearsal"
+    production["tool_input"]["message"] += "\nVERSION_MODE: rehearsal"
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(production)))
     assert check_version.gate(tmp_path) == 0
 
@@ -152,8 +152,8 @@ def test_gate_allows_only_explicit_rehearsals_while_mutable(tmp_path, monkeypatc
 def test_gate_ignores_unrelated_agents(tmp_path, monkeypatch):
     write_state(tmp_path, state())
     hook = {
-        "tool_name": "Agent",
-        "tool_input": {"subagent_type": "general-purpose", "prompt": "Inspect docs"},
+        "tool_name": "spawn_agent",
+        "tool_input": {"task_name": "general-purpose", "message": "Inspect docs"},
     }
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(hook)))
 

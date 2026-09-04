@@ -21,12 +21,11 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}" || exit 1
 TARGET_DIR="./testcases/my_set/cifs"   # EDIT -- a directory of .cif files
 ROOT="./runs/my_set"                   # EDIT -- entries in $ROOT/<stem>/, ledger in $ROOT/_batch/
 
-export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
-
 TOTAL=$(ls "$TARGET_DIR"/*.cif | wc -l)
 echo "start: $(tools/py tools/batch_log.py "$ROOT/_batch" --done 2>/dev/null | wc -l)/$TOTAL done"
 
-claude -p "deaverage the structures in $TARGET_DIR (out root $ROOT)" --permission-mode auto
+codex exec --approve-for-me --dangerously-bypass-hook-trust \
+  "deaverage the structures in $TARGET_DIR (out root $ROOT)"
 
 tools/py tools/batch_log.py "$ROOT/_batch" --summary 2>/dev/null
 

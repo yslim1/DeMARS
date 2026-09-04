@@ -18,7 +18,7 @@ DeMARS carries a numbered defect ledger. Comments and tests across the tree cite
   and no comment, test or episode in this repository cites either number. Do not reuse them
   until someone establishes what they were.
 - Defect numbering is about *this program's* behaviour. Entries from the source database are
-  referred to by chemistry, never by identifier — see `CLAUDE.md`, "name the chemistry, not the
+  referred to by chemistry, never by identifier — see `AGENTS.md`, "name the chemistry, not the
   entry."
 
 ---

@@ -1,6 +1,6 @@
 # Setup scripts
 
-The deterministic half of the `/setup` skill (`.claude/skills/setup/SKILL.md`). Each is usable
+The deterministic half of the `$setup` skill (`.agents/skills/setup/SKILL.md`). Each is usable
 on its own; the skill just asks the questions and runs them in this order.
 
 | script | does | prints |

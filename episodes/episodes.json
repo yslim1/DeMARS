@@ -137,7 +137,7 @@
      "text": "module docstring, COUPLING: 'a sub-Angstrom transition-metal split site'"
     },
     {
-     "where": ".claude/skills/mar-analyst/tools.md:88-100",
+     "where": ".agents/skills/mar-analyst/tools.md:88-100",
      "text": "slaved_units / orientation_units need a full-occupancy anchor of the same element"
     }
    ],
@@ -154,7 +154,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/principles.md",
+     "where": ".agents/skills/mar-analyst/principles.md",
      "text": "sibling section, composition-match requirement"
     }
    ],
@@ -170,7 +170,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/principles.md:38-50",
+     "where": ".agents/skills/mar-analyst/principles.md:38-50",
      "text": "the sibling is a COMPARISON, not a replacement"
     }
    ],
@@ -186,7 +186,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/principles.md:38-50",
+     "where": ".agents/skills/mar-analyst/principles.md:38-50",
      "text": "full doctrine, de-identified"
     }
    ],
@@ -242,7 +242,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/tools.md",
+     "where": ".agents/skills/mar-analyst/tools.md",
      "text": "provenance_summary, charge_balancing section"
     }
    ],
@@ -259,7 +259,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:153",
+     "where": ".agents/skills/mar-analyst/strategy.md:153",
      "text": "SINGLE-CONFIG GATE, conclusion"
     }
    ],
@@ -277,7 +277,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:143-144",
+     "where": ".agents/skills/mar-analyst/strategy.md:143-144",
      "text": "SINGLE-CONFIG GATE, opening"
     }
    ],
@@ -293,7 +293,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:133-134",
+     "where": ".agents/skills/mar-analyst/strategy.md:133-134",
      "text": "custom strategy, ensemble obligation"
     }
    ],
@@ -311,7 +311,7 @@
    "artifact": "doctrine + gate",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/principles.md:69-73",
+     "where": ".agents/skills/mar-analyst/principles.md:69-73",
      "text": "connectivity gate paragraph"
     },
     {
@@ -333,7 +333,7 @@
    "artifact": "diagnostic",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md",
+     "where": ".agents/skills/mar-analyst/strategy.md",
      "text": "--same-excl row"
     },
     {
@@ -354,7 +354,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:43-51",
+     "where": ".agents/skills/mar-analyst/strategy.md:43-51",
      "text": "orientation as configurational DOF"
     }
    ],
@@ -372,7 +372,7 @@
    "artifact": "doctrine",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:110-119",
+     "where": ".agents/skills/mar-analyst/strategy.md:110-119",
      "text": "CELL-LENGTH CUTOFF"
     }
    ],
@@ -398,7 +398,7 @@
    "artifact": "diagnostic",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:233",
+     "where": ".agents/skills/mar-analyst/strategy.md:233",
      "text": "full_occ_clash row, flag branch"
     },
     {
@@ -435,7 +435,7 @@
    "artifact": "diagnostic + deterministic code",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:235",
+     "where": ".agents/skills/mar-analyst/strategy.md:235",
      "text": "dummy_species triage row"
     },
     {
@@ -455,7 +455,7 @@
    "artifact": "doctrine + diagnostic",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/strategy.md:234",
+     "where": ".agents/skills/mar-analyst/strategy.md:234",
      "text": "no_full_backbone triage row"
     },
     {
@@ -480,7 +480,7 @@
    "artifact": "deterministic code",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/tools.md",
+     "where": ".agents/skills/mar-analyst/tools.md",
      "text": "connectivity, --couple-formers"
     },
     {
@@ -501,7 +501,7 @@
    "artifact": "deterministic code",
    "shipped_as": [
     {
-     "where": ".claude/skills/mar-analyst/tools.md",
+     "where": ".agents/skills/mar-analyst/tools.md",
      "text": "connectivity, role separation"
     }
    ],

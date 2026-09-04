@@ -3,6 +3,9 @@
 Copy one, edit the marked lines, submit **from the repo root** — every path inside is relative to
 it, and `tools/py` finds the interpreter through `./demars.yaml`.
 
+The templates call `codex exec`; install and authenticate Codex on the compute node before
+submitting them.
+
 ```bash
 sbatch assets/slurm/single.j path/to/structure.cif   # one structure
 sbatch assets/slurm/batch.j                          # a directory (edit the two paths inside)
@@ -35,7 +38,7 @@ across two roots.
 
 ## While a batch runs
 
-Leave `episodes/episodes.json` and the three `.claude/skills/*/SKILL.md` (plus `taxonomy.md`)
+Leave `episodes/episodes.json` and the three campaign skills under `.agents/skills/` (plus `taxonomy.md`)
 alone. The analyst and reviewer read them on *every* entry, so editing one mid-run re-bases the
 taxonomy partway through and the mechanism distribution stops being comparable across entries.
 A queued job inherits whatever is on disk when it *starts*, not when you submitted it.

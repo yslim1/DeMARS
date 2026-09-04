@@ -35,7 +35,7 @@ Usage:
   error     a stage could not complete. Give --stage and the real --error text.
   skipped   deliberately not processed. Finished; a resume does not come back to it.
 `--stage` : evidence | engine | connectivity | record | review
-`--round` : which analyst->reviewer pass this verdict came from. **There is ONE round** (`CLAUDE.md`
+`--round` : which analyst->reviewer pass this verdict came from. **There is ONE round** (`AGENTS.md`
   §3): a `revise` verdict is logged as `revise` and the entry is DONE -- the analyst is not re-run to
   answer the reviewer, so `--round 1` is the normal value. That keeps the revise rate measurable
   across a campaign, which is the number that says whether the analyst layer or the review layer
@@ -145,7 +145,7 @@ def main():
     ap.add_argument('--verdict', default=None)
     ap.add_argument('--round', type=int, default=None,
                     help='analyst->reviewer pass this verdict came from (1-based; there is ONE round '
-                         '-- see CLAUDE.md 3 -- so this is 1 unless the user asked for a re-run)')
+                         '-- see AGENTS.md 3 -- so this is 1 unless the user asked for a re-run)')
     ap.add_argument('--escalate', default=None)
     ap.add_argument('--error', default=None)
     args = ap.parse_args()
