@@ -3,6 +3,25 @@
   "mode": "mutable",
   "versions": [
     {
+      "version": "0.1.1",
+      "release_tag": "v0.1.1",
+      "based_on": "v0.1.0",
+      "changes": [
+        "Port the Claude Code harness to Codex project agents, hooks, repository skills, and provenance paths while preserving the domain templates and deterministic engine behavior.",
+        "Run the analyst and reviewer with gpt-5.6-terra at medium reasoning effort, and gate every supported agent tool name through one regression-tested version check.",
+        "Preserve reviewer scratch reproduction with workspace-write access while disabling hosted web search and nested agent spawning."
+      ],
+      "known_limits": [
+        "gates.hull needs a Materials Project API key; without it the gate stays not_run (unchecked).",
+        "The ordered-sibling search needs a user-built local ICSD index (assets/icsd_query); no ICSD data ships.",
+        "hull.tol_eV_per_atom has no default, so gates.hull reports E_above_hull with pass: null until a threshold is configured.",
+        "The frozen-state check requires a git clone with the release tag; a source zip without .git cannot run the judgment layer.",
+        "Codex custom agents do not expose Claude Code's generic per-agent built-in tool allowlist; reviewer safety instead uses workspace-write sandboxing, disabled hosted web search, disabled nested agents, and scoped instructions.",
+        "Codex has no equivalent forced skill preload or user-invocable: false setting for these repository skills; correct loading and isolation rely on custom-agent developer instructions and fresh one-entry orchestration.",
+        "Parent runtime permission overrides can supersede a custom agent's sandbox default; production runs must not use an unrestricted override such as --yolo."
+      ]
+    },
+    {
       "version": "0.1.0",
       "release_tag": "v0.1.0",
       "based_on": null,
