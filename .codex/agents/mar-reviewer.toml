@@ -1,7 +1,7 @@
 name = "mar-reviewer"
 model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
-sandbox_mode = "read-only"
+sandbox_mode = "workspace-write"
 web_search = "disabled"
 description = """
 Adversarial reviewer of a finalized MAR record. Independent, fresh-context skeptic that tries to

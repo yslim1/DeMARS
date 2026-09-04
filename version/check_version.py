@@ -26,6 +26,7 @@ PROTECTED_PATHS = (
 )
 STRICT_UNTRACKED_PATHS = (".codex/agents", ".agents/skills")
 CAMPAIGN_AGENTS = {"mar-analyst", "mar-reviewer"}
+AGENT_TOOL_NAMES = ("Task", "Agent", "spawn_agent")
 TAG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
@@ -176,9 +177,7 @@ def gate(root):
         hook = json.load(sys.stdin)
     except (OSError, json.JSONDecodeError, RecursionError) as exc:
         return _blocked(f"malformed hook JSON: {exc}")
-    if not isinstance(hook, dict) or hook.get("tool_name") not in (
-        "Task", "Agent", "spawn_agent"
-    ):
+    if not isinstance(hook, dict) or hook.get("tool_name") not in AGENT_TOOL_NAMES:
         return 0
     tool_input = hook.get("tool_input")
     if not isinstance(tool_input, dict):

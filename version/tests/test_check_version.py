@@ -165,7 +165,6 @@ def test_codex_hook_matches_all_supported_agent_tool_names():
     hooks = json.loads((VERSION_DIR.parent / ".codex" / "hooks.json").read_text())
     matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
 
-    assert re.fullmatch(matcher, "Task")
-    assert re.fullmatch(matcher, "Agent")
-    assert re.fullmatch(matcher, "spawn_agent")
+    for tool_name in check_version.AGENT_TOOL_NAMES:
+        assert re.fullmatch(matcher, tool_name)
     assert not re.fullmatch(matcher, "send_message")
