@@ -50,3 +50,6 @@ answer is not. If unsure whether a source is ours, don't open it.
 Return the structured record defined in the skill, and be honest about confidence and anything you
 would escalate.
 """
+
+[agents]
+enabled = false

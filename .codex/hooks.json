@@ -16,7 +16,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^Agent$",
+        "matcher": "^(Task|Agent|spawn_agent)$",
         "hooks": [
           {
             "type": "command",

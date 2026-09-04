@@ -1,6 +1,7 @@
 import io
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -158,3 +159,13 @@ def test_gate_ignores_unrelated_agents(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(hook)))
 
     assert check_version.gate(tmp_path) == 0
+
+
+def test_codex_hook_matches_all_supported_agent_tool_names():
+    hooks = json.loads((VERSION_DIR.parent / ".codex" / "hooks.json").read_text())
+    matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
+
+    assert re.fullmatch(matcher, "Task")
+    assert re.fullmatch(matcher, "Agent")
+    assert re.fullmatch(matcher, "spawn_agent")
+    assert not re.fullmatch(matcher, "send_message")
