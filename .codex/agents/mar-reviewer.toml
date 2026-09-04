@@ -1,6 +1,6 @@
 name = "mar-reviewer"
 model = "gpt-5.6-terra"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 description = """
 Adversarial reviewer of a finalized MAR record. Independent, fresh-context skeptic that tries to
 REFUTE the analyst's verdict — re-reads the evidence, checks the MAR passes the gates AND is

@@ -1,6 +1,6 @@
 name = "mar-analyst"
 model = "gpt-5.6-terra"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 description = """
 Deep, per-entry disorder analyst for the DeMARS project. Given a single disordered structure file
 (CIF), mines the CIF's intrinsic evidence, judges the disorder mechanism (A–F), builds a Minimal
