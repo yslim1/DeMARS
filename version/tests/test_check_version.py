@@ -1,7 +1,6 @@
 import io
 import json
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
@@ -161,10 +160,9 @@ def test_gate_ignores_unrelated_agents(tmp_path, monkeypatch):
     assert check_version.gate(tmp_path) == 0
 
 
-def test_codex_hook_matches_all_supported_agent_tool_names():
-    hooks = json.loads((VERSION_DIR.parent / ".codex" / "hooks.json").read_text())
-    matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
+def test_opencode_plugin_gates_the_task_tool():
+    plugin = (VERSION_DIR.parent / ".opencode" / "plugins" / "demars-version.js").read_text()
 
-    for tool_name in check_version.AGENT_TOOL_NAMES:
-        assert re.fullmatch(matcher, tool_name)
-    assert not re.fullmatch(matcher, "send_message")
+    assert 'input.tool !== "task"' in plugin
+    assert "check_version.py" in plugin and " gate " in plugin
+    assert "task" in check_version.AGENT_TOOL_NAMES

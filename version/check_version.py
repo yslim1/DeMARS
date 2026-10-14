@@ -14,9 +14,10 @@ PROTECTED_PATHS = (
     "demars-core",
     "tools",
     "episodes",
-    ".codex/agents",
+    ".opencode/agents",
     ".agents/skills",
-    ".codex/hooks.json",
+    ".opencode/plugins",
+    "opencode.json",
     "AGENTS.md",
     "assets/demars.yaml.example",
     "assets/setup",
@@ -24,9 +25,9 @@ PROTECTED_PATHS = (
     "version/README.md",
     "version/tests",
 )
-STRICT_UNTRACKED_PATHS = (".codex/agents", ".agents/skills")
+STRICT_UNTRACKED_PATHS = (".opencode/agents", ".opencode/plugins", ".agents/skills")
 CAMPAIGN_AGENTS = {"mar-analyst", "mar-reviewer"}
-AGENT_TOOL_NAMES = ("Task", "Agent", "spawn_agent")
+AGENT_TOOL_NAMES = ("Task", "Agent", "spawn_agent", "task")
 TAG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 

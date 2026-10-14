@@ -3,6 +3,26 @@
   "mode": "mutable",
   "versions": [
     {
+      "version": "0.1.2",
+      "release_tag": "v0.1.2",
+      "based_on": "v0.1.1",
+      "changes": [
+        "Port the Codex harness to OpenCode: project subagents in .opencode/agents, a version-check plugin in .opencode/plugins, and opencode.json. Repository skills, episodes, tools and the deterministic engine are unchanged from v0.1.1.",
+        "Run the orchestrator on openai/gpt-6-astra and the analyst and reviewer on openai/gpt-5.6-terra, all at medium reasoning effort, matching the Codex v0.1.1 roles.",
+        "Fix permissions in opencode.json so a production run never waits for a person: no ask rules, the question tool denied, a short list of destructive shell commands denied, no nested agent launches from the analyst or reviewer, and no web access for the reviewer."
+      ],
+      "known_limits": [
+        "gates.hull needs a Materials Project API key; without it the gate stays not_run (unchecked).",
+        "The ordered-sibling search needs a user-built local ICSD index (assets/icsd_query); no ICSD data ships.",
+        "hull.tol_eV_per_atom has no default, so gates.hull reports E_above_hull with pass: null until a threshold is configured.",
+        "The frozen-state check requires a git clone with the release tag; a source zip without .git cannot run the judgment layer.",
+        "OpenCode has no OS-level sandbox; shell commands are limited only by permission patterns, unlike Codex workspace-write.",
+        "There is no LLM approval reviewer in this harness (Codex guardian, Claude Code auto-mode classifier).",
+        "The plugin cannot inject a failed session-start check into the model context; it logs it, and blocks campaign-agent launches while the frozen check fails.",
+        "The SLURM templates in assets/slurm still call codex exec."
+      ]
+    },
+    {
       "version": "0.1.1",
       "release_tag": "v0.1.1",
       "based_on": "v0.1.0",

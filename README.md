@@ -18,14 +18,14 @@ The package has two layers, and the split is the point:
 **Code proves; the analyst judges.** Every number in a record comes from the engine; the skills
 decide what to build and what it means, and the reviewer independently attacks it.
 
-You can use the engine completely on its own. The judgment layer needs Codex and is what turns a
+You can use the engine completely on its own. The judgment layer needs OpenCode and is what turns a
 hard structure into a defensible one.
 
 ---
 
 ## Install
 
-In Codex, `$setup` walks through everything below — env, `demars.yaml`, the optional ICSD
+In OpenCode, the `setup` skill walks through everything below — env, `demars.yaml`, the optional ICSD
 index, and a verification pass (`assets/setup/`, scripts usable on their own). By hand:
 
 ```bash
@@ -44,7 +44,7 @@ Optional extras, both **off by default** because they build from source against 
 `[oeq]` and `[cueq]` install SevenNet's fused-kernel backends for `compute.accelerator` in the config.
 
 **Distribution is this repository, as a git clone** — not a standalone wheel, and not a source zip.
-The methodology lives in `.agents/` and `.codex/`, which a wheel does not carry, and the version gate in
+The methodology lives in `.agents/` and `.opencode/`, which a wheel does not carry, and the version gate in
 `version/` verifies the checkout against its release tag before it lets the analyst run, so a
 download without `.git` can drive the engine but not the judgment layer.
 
@@ -101,7 +101,7 @@ is simple — one substitutional sublattice, no molecular ions, no split sites y
 
 ## Run one structure — the full pipeline
 
-Evidence → mechanism → build → gates → adversarial review → a `record.json`. In Codex, from the
+Evidence → mechanism → build → gates → adversarial review → a `record.json`. In OpenCode, from the
 repo root:
 
 ```
@@ -246,7 +246,7 @@ not just the verdicts.
 | `demars-core/README.md` | the engine: Python API, CLI, MLIP backends, troubleshooting |
 | `tools/README.md` | the stage-①→⑥ file contracts the agents orchestrate |
 | `AGENTS.md` | the trigger, the defaults, the facts that bite |
-| `version/README.md` | when protected code may change: the `frozen` / `mutable` modes, release tags, and the hooks in `.codex/hooks.json` that check them |
+| `version/README.md` | when protected code may change: the `frozen` / `mutable` modes, release tags, and the plugin in `.opencode/plugins/` that checks them |
 | `assets/` | `demars.yaml.example`, `setup/` (env, config, doctor), `slurm/` (job templates), `icsd_query/` (the local ICSD indexer and CLI) |
 | `reference/` | the stored answers `tools/demars_reference.py` checks a fresh install against |
 | `.agents/skills/mar-analyst/` | the methodology: `taxonomy.md` (mechanism classes A–F), `strategy.md`, `principles.md`, `tools.md` — **edit these to change how the analyst judges** |
@@ -259,7 +259,7 @@ not just the verdicts.
 ## License
 
 **MIT** — see `LICENSE` at the repository root. It covers the whole distribution unit: the engine
-(`demars-core/`), the stage tools (`tools/`), the judgment layer (`.agents/` and `.codex/`) and the episodes
+(`demars-core/`), the stage tools (`tools/`), the judgment layer (`.agents/` and `.opencode/`) and the episodes
 (`episodes/`).
 
 Runtime dependencies are MIT/BSD, except ASE (LGPL-2.1-or-later), which imposes nothing on a
