@@ -187,6 +187,14 @@ def _mar10_flags(rec):
     return flags, worst
 
 
+def _mar10_cert(rec):
+    """-> workflow-level certification: certified = reviewed with no unresolved blocking objection."""
+    rv = rec.get('review')
+    if rv is None:
+        return 'unreviewed'
+    return 'declined' if rv.get('unresolved_blocking') else 'certified'
+
+
 def _mar10_card(name, rec, detail_href, has_view):
     j = rec.get('mechanism') or {}          # mar-1.0 keeps the judgment here, not under `judgment`
     rep = rec.get('representative') or {}
@@ -216,7 +224,7 @@ def _mar10_card(name, rec, detail_href, has_view):
     flag_html = (f'<div class="flags {worst}">{html.escape(" · ".join(flags))}</div>'
                  if flags else '<div class="flags ok">all gates derived · reviewed</div>')
     foot = 'record &amp; 3-D →' if has_view else 'record →'
-    return (f'<a class="card" data-status="{html.escape(worst)}" data-search="{search}" '
+    return (f'<a class="card" data-status="{_mar10_cert(rec)}" data-search="{search}" '
             f'href="{detail_href}">'
             f'<h3>{html.escape(str(title))}</h3>'
             f'<div class="sub">{html.escape(name)}</div>'
@@ -527,13 +535,14 @@ def build_gallery(results_dir, out_dir=None, title='DeMARS results', generated=N
     for old in glob.glob(os.path.join(out_dir, 'r-*.html')):
         os.remove(old)
 
-    cards, seen, present, n = [], set(), set(), 0
+    cards, seen, present, tally, n = [], set(), set(), {}, 0
     for name, rdir, rec in _find_results(results_dir):
         n += 1
         mar10 = _is_mar10(rec)
         # the index filter groups by what a reader is scanning FOR: a de-average output by run
-        # status, a judged record by whether anything about it is unchecked or failing.
-        present.add(_mar10_flags(rec)[1] if mar10 else (rec.get('status') or '?'))
+        # status, a judged record by workflow-level certification (no unresolved blocking objection).
+        st = _mar10_cert(rec) if mar10 else (rec.get('status') or '?')
+        present.add(st); tally[st] = tally.get(st, 0) + 1
         src = _structure_file(rdir) or (_mar10_structure(rdir, rec) if mar10 else None)
         viewer_href = None
         if src:
@@ -561,7 +570,8 @@ def build_gallery(results_dir, out_dir=None, title='DeMARS results', generated=N
         opts = '<option value="all">all statuses</option>' + ''.join(
             f'<option value="{html.escape(s)}">{html.escape(s)}</option>' for s in sorted(present))
         toolbar = (f'<header><h1>{html.escape(title)}</h1>'
-                   f'<div class="meta">{n} result{"s" if n != 1 else ""}{gen} · '
+                   f'<div class="meta">{n} result{"s" if n != 1 else ""}'
+                   f'{"".join(f" · {tally[s]} {html.escape(s)}" for s in sorted(tally))}{gen} · '
                    f'click a card for details + the 3-D ensemble</div>'
                    f'<div class="toolbar"><input id="q" type="search" autocomplete="off" '
                    f'placeholder="filter by formula, element, or name…">'
