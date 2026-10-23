@@ -187,6 +187,9 @@ def _mar10_flags(rec):
     return flags, worst
 
 
+_CERT_CLS = {'certified': 'ok', 'declined': 'err', 'unreviewed': 'unchecked'}
+
+
 def _mar10_cert(rec):
     """-> workflow-level certification: certified = reviewed with no unresolved blocking objection."""
     rv = rec.get('review')
@@ -205,7 +208,7 @@ def _mar10_card(name, rec, detail_href, has_view):
     # in full next to `class_label`.
     cls_full = str(j.get('class') or '?')
     cls = cls_full if len(cls_full) <= 16 else cls_full[:15] + '…'
-    flags, worst = _mar10_flags(rec)
+    flags = _mar10_flags(rec)[0]
     rv = rec.get('review') or {}
     verdict = rv.get('final_verdict') or ('unreviewed' if rec.get('review') is None else '?')
 
@@ -219,12 +222,16 @@ def _mar10_card(name, rec, detail_href, has_view):
         _stat_chip('conf', j.get('confidence')),
         _stat_chip('shipped', rep.get('source')),
     ])
-    search = html.escape(' '.join(str(x) for x in (title, name, cls_full, verdict, *flags)).lower(),
-                         quote=True)
-    flag_html = (f'<div class="flags {worst}">{html.escape(" · ".join(flags))}</div>'
-                 if flags else '<div class="flags ok">all gates derived · reviewed</div>')
+    cert = _mar10_cert(rec)
+    search = html.escape(' '.join(str(x) for x in (title, name, cls_full, verdict, cert, *flags))
+                         .lower(), quote=True)
+    # the card leads with certification; the gate/audit flags stay in the tooltip and detail page
+    n_blk = len(rv.get('unresolved_blocking') or [])
+    cert_txt = cert + (f' · {n_blk} blocking objection{"s" if n_blk != 1 else ""}' if n_blk else '')
+    flag_html = (f'<div class="flags {_CERT_CLS[cert]}" title="{html.escape(" · ".join(flags), quote=True)}">'
+                 f'{html.escape(cert_txt)}</div>')
     foot = 'record &amp; 3-D →' if has_view else 'record →'
-    return (f'<a class="card" data-status="{_mar10_cert(rec)}" data-search="{search}" '
+    return (f'<a class="card" data-status="{cert}" data-search="{search}" '
             f'href="{detail_href}">'
             f'<h3>{html.escape(str(title))}</h3>'
             f'<div class="sub">{html.escape(name)}</div>'
