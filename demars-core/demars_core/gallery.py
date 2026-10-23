@@ -228,7 +228,12 @@ def _mar10_card(name, rec, detail_href, has_view):
     # the card leads with certification; the gate/audit flags stay in the tooltip and detail page
     n_blk = len(rv.get('unresolved_blocking') or [])
     cert_txt = cert + (f' · {n_blk} blocking objection{"s" if n_blk != 1 else ""}' if n_blk else '')
-    flag_html = (f'<div class="flags {_CERT_CLS[cert]}" title="{html.escape(" · ".join(flags), quote=True)}">'
+    # a certified record whose gate failed was passed by the reviewer, not by the gate: say so
+    failed = [f for f in flags if f.endswith(' FAILS')]
+    cert_cls = 'warn' if cert == 'certified' and failed else _CERT_CLS[cert]
+    if cert_cls == 'warn':
+        cert_txt += ' · ' + ', '.join(failed) + ' (reviewed)'
+    flag_html = (f'<div class="flags {cert_cls}" title="{html.escape(" · ".join(flags), quote=True)}">'
                  f'{html.escape(cert_txt)}</div>')
     foot = 'record &amp; 3-D →' if has_view else 'record →'
     return (f'<a class="card" data-status="{cert}" data-search="{search}" '
@@ -436,9 +441,9 @@ def _detail_page(name, rec, viewer_href, title):
 
 _CSS = """
 :root{--bg:#f6f7f9;--card:#fff;--fg:#1c2024;--sub:#6b7280;--line:#e5e7eb;--accent:#2f6feb;
- --okc:#1f7a4d;--okbg:#e6f4ec;--errc:#a3341f;--errbg:#fbe9e5;--unkc:#8a6a1f;--unkbg:#f7efdc}
+ --okc:#1f7a4d;--okbg:#e6f4ec;--errc:#a3341f;--errbg:#fbe9e5;--unkc:#8a6a1f;--unkbg:#f7efdc;--warnc:#c2570c}
 @media (prefers-color-scheme:dark){:root{
- --okc:#6dd39b;--okbg:#14291f;--errc:#f0a08c;--errbg:#2e1a16;--unkc:#dcb765;--unkbg:#2b2415}}
+ --okc:#6dd39b;--okbg:#14291f;--errc:#f0a08c;--errbg:#2e1a16;--unkc:#dcb765;--unkbg:#2b2415;--warnc:#f59e4c}}
 .gates{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 6px}
 .gate{font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 6px;border-radius:4px;
  white-space:nowrap}
@@ -450,6 +455,7 @@ _CSS = """
 .flags.ok{color:var(--okc)}
 .flags.err{color:var(--errc);font-weight:600}
 .flags.unchecked{color:var(--unkc)}
+.flags.warn{color:var(--warnc);font-weight:600}
 .badge.cls{background:var(--accent);color:#fff}
 table.gt td.ok{color:var(--okc)}
 table.gt td.err{color:var(--errc);font-weight:600}
