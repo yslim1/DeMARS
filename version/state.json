@@ -3,6 +3,22 @@
   "mode": "mutable",
   "versions": [
     {
+      "version": "0.1.1",
+      "release_tag": "v0.1.1",
+      "based_on": "v0.1.0",
+      "changes": [
+        "Gallery: mar-1.0 cards grouped by workflow-level certification, certification led on each card, failed-gate certified cards marked.",
+        "Episodes and defect ledger: provenance cleaned to what the source layer supports (secondary-sourced narrative removed, a held-out entry's description generalized, dangling defect pointers and artifact labels corrected); D20 restored from the pre-history backup; D40's label marked unresolved.",
+        "Batch ledger: execution status renamed 'ok' -> 'completed' so it cannot be read as a quality verdict; legacy 'ok' rows are accepted and read as finished."
+      ],
+      "known_limits": [
+        "gates.hull needs a Materials Project API key; without it the gate stays not_run (unchecked).",
+        "The ordered-sibling search needs a user-built local ICSD index (assets/icsd_query); no ICSD data ships.",
+        "hull.tol_eV_per_atom has no default, so gates.hull reports E_above_hull with pass: null until a threshold is configured.",
+        "The frozen-state check requires a git clone with the release tag; a source zip without .git cannot run the judgment layer."
+      ]
+    },
+    {
       "version": "0.1.0",
       "release_tag": "v0.1.0",
       "based_on": null,
