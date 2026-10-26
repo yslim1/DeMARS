@@ -7,6 +7,7 @@ description: >
   deterministic gates. Runs in an isolated context — one analyst per entry. Use for case-by-case
   MAR work.
 model: claude-sonnet-5
+effort: high
 tools: Bash, Read, Write, Grep, Glob, WebSearch, WebFetch
 skills:
   - mar-analyst

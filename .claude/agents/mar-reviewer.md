@@ -7,6 +7,7 @@ description: >
   specific objections. One record per reviewer; never shares the analyst's context.
 tools: Bash, Read, Grep, Glob
 model: claude-sonnet-5
+effort: high
 skills:
   - mar-reviewer
 ---
