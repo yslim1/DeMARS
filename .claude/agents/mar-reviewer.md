@@ -6,7 +6,7 @@ description: >
   chemically right, scrutinizes boundary calls — and returns confirm / revise / escalate with
   specific objections. One record per reviewer; never shares the analyst's context.
 tools: Bash, Read, Grep, Glob
-model: sonnet
+model: claude-sonnet-5
 skills:
   - mar-reviewer
 ---

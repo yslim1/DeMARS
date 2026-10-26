@@ -6,7 +6,7 @@ description: >
   Atomistic Representation by orchestrating the demars-core tools, and verifies it with the
   deterministic gates. Runs in an isolated context — one analyst per entry. Use for case-by-case
   MAR work.
-model: sonnet
+model: claude-sonnet-5
 tools: Bash, Read, Write, Grep, Glob, WebSearch, WebFetch
 skills:
   - mar-analyst
