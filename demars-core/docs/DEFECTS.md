@@ -14,9 +14,10 @@ DeMARS carries a numbered defect ledger. Comments and tests across the tree cite
   allocated to findings later reclassified as procedure or environment rather than code defects.
   There was a period when older provisional citations were being converted into these numbers, so a
   reused number would silently resolve to the wrong thing.
-- **D4 and D20 are unaccounted for.** They are in neither the table below nor the burned list,
-  and no comment, test or episode in this repository cites either number. Do not reuse them
-  until someone establishes what they were.
+- **D4 is unaccounted for.** It is in neither the table below nor the burned list, and no comment,
+  test or episode in this repository cites it. Do not reuse it until someone establishes what it
+  was. (D20 was in the same state until its description was recovered from the pre-history
+  backup's commit record; it is in the table below.)
 - Defect numbering is about *this program's* behaviour. Entries from the source database are
   referred to by chemistry, never by identifier — see `CLAUDE.md`, "name the chemistry, not the
   entry."
@@ -48,6 +49,7 @@ One line per number. Where a test pins it, that test is the authoritative descri
 | D17 | the fused-kernel accelerator changed numbers and the record did not say so | `test_accelerator_provenance.py` |
 | D18 | the skill told subagents to background a relaxation and not what to do next | — |
 | D19 | the only way to ship a frame other than the engine's lowest was to call it a custom build | TBR:938 |
+| D20 | the record's ICSD id has to be passed twice by hand, and nothing notices when it isn't | — |
 | D21 | recording the review deleted what the review asked for | TBR:751 |
 | D22 | nano was not released on tier transition → final-tier OOM | — |
 | D23 | a requested final tier that failed returned `{}`, indistinguishable from "not requested" | TSC:342 |
@@ -74,6 +76,13 @@ One line per number. Where a test pins it, that test is the authoritative descri
 **D32 is only half closed.** The blind spot it closed for the adjusted branch remains one
 branch over: a rollup read `n_unconfident` as 0 because the values were CONFIDENT, so the gate saw
 nothing. See TBR:1129.
+
+**D40's label is unresolved.** The one-line description above came from the historical ledger,
+while `episodes/episodes.json` (E-rigid-polyanion) cites D40 for an unrelated open issue — the
+rigid-placement residual (relaxation only partly heals a mis-placed unit, and the composition-only
+gates pass it). No code or test cites D40 and the original ledger is gone, so neither side can be
+verified. Treat the label as a placeholder, do not reuse the number, and if the rigid-placement
+residual needs a number, allocate a fresh one rather than re-reading D40.
 
 Provenance, where it is recorded: **D22 · D23 · D25 · D27** — a **hydrous Fe/Mn phosphate**
 (tier-memory release, the requested-vs-unrequested final tier, a former outside the coordination

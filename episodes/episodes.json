@@ -92,7 +92,7 @@
      "67403",
      "258159"
     ],
-    "detail": "Three records shipped a probe while representative.source read engine-lowest; margins 2.8 / 4.1 / 0.8 meV/atom over the best random frame -- one clustered draw, two dispersed, so a clustered-only gate would have missed two. The structures were not wrong; the label concealed what they were. Closed 2026-08-24: `ship_candidates()` defines the eligible pool and all five selection sites consult it, `bracket_probes` keeps the margins as a diagnostic, and `gates.sqs` remains as a watchdog."
+    "detail": "Three records shipped a probe while representative.source read engine-lowest; margins 2.8 / 4.1 / 0.8 meV/atom over the best random frame -- one clustered draw, two dispersed, so a clustered-only gate would have missed two. The structures were not wrong; the label concealed what they were. Closed 2026-08-24: `ship_candidates()` defines the eligible pool and all five selection sites consult it, `bracket_probes` keeps the margins as a diagnostic, and `gates.sqs` remains as a watchdog. Only two entry ids survive in this provenance for the three records; whether the third was a re-run of one of them or a distinct entry is no longer recoverable."
    }
   },
   "E-unlocated-h": {
@@ -213,7 +213,7 @@
   },
   "E-valence-formula": {
    "lesson": "Check the built composition against the valence-consistent formula, not only against charge neutrality. A cell can balance and still carry the wrong anion count.",
-   "artifact": "gate",
+   "artifact": "open",
    "shipped_as": [],
    "provenance": {
     "entries": [],
@@ -390,7 +390,7 @@
    "shipped_as": [],
    "provenance": {
     "entries": [],
-    "detail": "Sourced only from the engine's own orbit-grouping comments -- mar_evidence.py:450 'orbits = positions grouped by occupancy signature' and mar_engine.py:1170 'disordered orbits (by species-occupancy signature)'. The earlier text here described a specific anti-site sampling failure in a lithium molybdate double perovskite, its root cause, and the entry it was seen on; that account came from the manuscript, not from this program's code, comments, or run records, and has been removed along with the entry id that anchored it. No run record and no interpretation entry for that case exists in the source layer. There is no DEFECTS.md entry because no defect is established here; if the failure is reconfirmed from primary measurements, this episode should be rewritten from those, not from the manuscript."
+    "detail": "Sourced only from the engine's own orbit-grouping comments -- mar_evidence.py:450 'orbits = positions grouped by occupancy signature' and mar_engine.py:1170 'disordered orbits (by species-occupancy signature)'. No run record or interpretation entry for this behaviour exists in the source layer, and there is no DEFECTS.md entry because no defect is established here. If the behaviour is ever observed, record it from primary measurements, never from secondary writeups."
    }
   },
   "E-superposition": {
@@ -519,10 +519,9 @@
    "shipped_as": [],
    "provenance": {
     "entries": [],
-    "detail": "Measured on a hydrated lanthanide oxalate coordination polymer in which some water oxygens are fully occupied and coordinated to the metal while others are extra, non-coordinated channel waters carrying ordinary positional-split or partial occupancy -- no orientational coupling on any of them -- and H was entirely unlocated in the source refinement. That entry is in a set this project measures over, so the lesson is stated here without its evidence: when the ordered acceptors alone cannot cover the formula H deficit, H-restore declines globally and the charge balancer then empties the disordered orbit, shipping an anhydrous cell. Re-run the held-out cross-check whenever those sets change.",
+    "detail": "Measured on an entry in a set this project measures over, so the lesson is stated here without its evidence: when the ordered acceptors alone cannot cover the formula H deficit, H-restore declines globally and the charge balancer then empties the disordered orbit, shipping an anhydrous cell. Re-run the held-out cross-check whenever those sets change.",
     "related_episode": "E-charge-erases-disorder",
-    "residual_hint": true,
-    "open_defect": "h_restore all-or-nothing acceptor gate (see demars-core/docs/DEFECTS.md)"
+    "open_defect": "h_restore all-or-nothing acceptor gate (not yet numbered in DEFECTS.md)"
    }
   }
  }
