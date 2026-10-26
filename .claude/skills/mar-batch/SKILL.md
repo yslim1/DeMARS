@@ -93,7 +93,8 @@ production settings), say so and give a rough wall-clock before you begin.
 ```bash
 python tools/batch_log.py <root>/_batch --done
 ```
-Skip any file it prints — those are FINISHED (last row `ok`, `declined` or `skipped`) — unless the user said to
+Skip any file it prints — those are FINISHED (last row `completed`, `declined` or `skipped`; older
+ledgers spell `completed` as `ok`, which reads the same) — unless the user said to
 redo them. Say how many you're skipping. An entry whose last row is `error` is deliberately NOT in
 that list: it has no record, so a resume runs it again. So is an entry with a run directory but no
 ledger row at all, which is what a session that died mid-entry leaves behind.
@@ -105,7 +106,7 @@ Run the normal cycle (analyst → reviewer, **one round — no revise loop**, de
 `CLAUDE.md`), and log **immediately after the review**, one row per entry (`--round 1`):
 
 ```bash
-python tools/batch_log.py <root>/_batch --file <cif> --status ok --rundir <root>/<stem> \
+python tools/batch_log.py <root>/_batch --file <cif> --status completed --rundir <root>/<stem> \
        --class "<class>" --confidence <high|medium|[screening]> \
        --gates "charge=pass,fidelity=pass,connectivity=clean,sqs=pass,hull=derived" \
        --verdict <confirm|revise|escalate> --round <N> [--escalate "<kind>: <one clause>"]
@@ -161,8 +162,9 @@ though it completed.
 - **Never quietly weaken settings to force a pass.** Dropping `--nr` or the cell to make a
   stubborn structure succeed, without saying so, turns a failure into a bad record. If you do
   reduce anything, it goes in `decision_trace` AND the ledger note, and `confidence` drops.
-- **A failing gate is not a batch error.** `--status ok` with `gates=charge=FAIL` is the correct
-  row: the pipeline ran, the structure has a problem. Reserve `--status error` for a stage that
+- **A failing gate is not a batch error.** `--status completed` with `gates=charge=FAIL` is the
+  correct row: `completed` says the pipeline RAN — it is an execution status, never a quality
+  verdict, which lives in `--gates` and in the record. Reserve `--status error` for a stage that
   could not complete.
 - **A refusal is not a batch error either.** `error` means something broke and a retry might work;
   `declined` means the pipeline ran to a conclusion and the conclusion is that this evidence cannot
@@ -178,4 +180,5 @@ though it completed.
 `<root>/_batch/batch.jsonl` (machine-readable, one row per structure) and `<root>/_batch/batch.log`
 (human-readable). Fields: `ts, file, status, stage, rundir, klass, confidence, gates, verdict,
 escalate, error`. `--summary` prints a table plus a rerun list; `--done` prints the finished files
-(last row `ok`, `declined` or `skipped`; an `error` entry is left out so a resume retries it).
+(last row `completed`, `declined` or `skipped`, with legacy `ok` read as `completed`; an `error`
+entry is left out so a resume retries it).

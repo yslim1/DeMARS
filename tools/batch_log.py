@@ -7,7 +7,7 @@ both a machine-readable `batch.jsonl` and a human-readable `batch.log`.
 
 Usage:
   # after each structure -- ALWAYS call this, success or failure
-  python tools/batch_log.py <logdir> --file A.cif --status ok \
+  python tools/batch_log.py <logdir> --file A.cif --status completed \
          --rundir runs/A --class A+B --confidence high \
          --gates "charge=pass,fidelity=pass,connectivity=clean,sqs=pass,hull=derived" --verdict confirm
 
@@ -19,11 +19,14 @@ Usage:
 
   python tools/batch_log.py <logdir> --summary        # table + counts + rerun list
   python tools/batch_log.py <logdir> --done           # newline-separated FINISHED files -- last row
-                                                      # `ok`, `declined` or `skipped`. An `error`
+                                                      # `completed`, `declined` or `skipped`. An `error`
                                                       # entry is left out so a resume runs it again.
 
-`--status`: ok | declined | error | skipped
-  ok        the pipeline RAN and produced a MAR. A failing gate is still `ok` -- record it in --gates.
+`--status`: completed | declined | error | skipped
+  completed the pipeline RAN and produced a MAR. This is an EXECUTION status, not a quality verdict:
+            a failing gate is still `completed` -- the gate verdict travels in --gates and in the
+            record itself. (`ok` is the legacy spelling; it is accepted and normalized on write, and
+            rows already written as `ok` read as finished.)
   declined  it ran to a CONCLUSION and the conclusion is that no reliable MAR can be produced from
             this evidence. Give --stage and, in --error, what a human or the literature has to
             supply. This is the second of the two ways an entry legitimately ends, and it is FINISHED:
@@ -75,7 +78,7 @@ def append(logdir, row):
     jsonl, log = _paths(logdir)
     with open(jsonl, 'a', encoding='utf-8') as fh:
         fh.write(json.dumps(row, ensure_ascii=False) + '\n')
-    mark = {'ok': 'OK   ', 'declined': 'DECL ', 'error': 'ERROR',
+    mark = {'completed': 'DONE ', 'ok': 'OK   ', 'declined': 'DECL ', 'error': 'ERROR',
             'skipped': 'SKIP '}.get(row['status'], '?    ')
     bits = [f"{row['ts']}  {mark}  {row['file']}"]
     if row.get('klass'):      bits.append(f"class={row['klass']}")
@@ -97,7 +100,7 @@ def summary(logdir):
         return 0
     # A file can hold SEVERAL rows (an `error` row and a later retry, or a re-run pass the user
     # asked for), so count STRUCTURES, not rows: its last row is its outcome. Counting rows would
-    # inflate `ok` and misreport the batch.
+    # inflate `completed` and misreport the batch.
     last = {}
     for r in rows:
         last[r.get('file', '')] = r
@@ -133,10 +136,10 @@ def main():
     ap.add_argument('logdir', help='batch log dir (e.g. runs/_batch)')
     ap.add_argument('--summary', action='store_true', help='print the table and exit')
     ap.add_argument('--done', action='store_true',
-                    help='print files that are FINISHED (last row `ok`, `declined` or `skipped`) -- '
+                    help='print files that are FINISHED (last row `completed`, `declined` or `skipped`) -- '
                          'for resuming. An `error` entry is NOT printed: a resume should run it again')
     ap.add_argument('--file', help='the structure this row is about')
-    ap.add_argument('--status', choices=('ok', 'declined', 'error', 'skipped'))
+    ap.add_argument('--status', choices=('completed', 'ok', 'declined', 'error', 'skipped'))
     ap.add_argument('--stage', default=None, help='evidence|engine|connectivity|record|review')
     ap.add_argument('--rundir', default=None)
     ap.add_argument('--class', dest='klass', default=None)
@@ -168,11 +171,13 @@ def main():
         # conclusion is a refusal. Re-running reproduces it, so offering it to a resume is a loop
         # that cannot end -- which is exactly what it did before this status existed.
         for f, status in last.items():
-            if status in ('ok', 'declined', 'skipped'):
+            if status in ('completed', 'ok', 'declined', 'skipped'):
                 print(f)
         return 0
     if not args.file or not args.status:
         ap.error('--file and --status are required unless --summary/--done')
+    if args.status == 'ok':            # legacy spelling of the execution status
+        args.status = 'completed'
 
     row = {'ts': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     for k in FIELDS:
