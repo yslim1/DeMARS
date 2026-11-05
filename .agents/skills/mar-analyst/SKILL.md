@@ -1,9 +1,12 @@
 ---
 name: mar-analyst
-# Background knowledge for the mar-analyst SUBAGENT, not a slash command. Typing /mar-analyst would
-# load this procedure inline in the main conversation -- which already holds whatever came before --
-# and the isolation the design depends on ("one analyst per entry, isolated context") would be gone.
-# Do NOT use `disable-model-invocation` here: it also blocks preloading into the subagent.
+# Background knowledge for the mar-analyst agent, not the main conversation. Invoking this skill
+# directly (`/mar-analyst`, `$mar-analyst`, or the `skill` tool) after other case work would load the
+# procedure into a context that already holds prior answers and break the isolation the design
+# depends on ("one analyst per entry, isolated context"). The pipeline instead launches the project
+# agent `mar-analyst` (.claude/agents, .codex/agents, .opencode/agents), which loads this skill first.
+# `user-invocable: false` hides it from Claude Code's slash menu; do NOT use
+# `disable-model-invocation` instead -- it also blocks preloading into the subagent.
 user-invocable: false
 description: >
   Per-entry disorder analyst for the DeMARS project. Given one disordered structure file (CIF),

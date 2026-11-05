@@ -21,12 +21,21 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}" || exit 1
 TARGET_DIR="./testcases/my_set/cifs"   # EDIT -- a directory of .cif files
 ROOT="./runs/my_set"                   # EDIT -- entries in $ROOT/<stem>/, ledger in $ROOT/_batch/
 
-export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
-
 TOTAL=$(ls "$TARGET_DIR"/*.cif | wc -l)
 echo "start: $(tools/py tools/batch_log.py "$ROOT/_batch" --done 2>/dev/null | wc -l)/$TOTAL done"
 
-claude -p "deaverage the structures in $TARGET_DIR (out root $ROOT)" --permission-mode auto
+HARNESS="${HARNESS:-claude}"   # claude | codex | opencode  (sbatch --export=ALL,HARNESS=codex ...)
+PROMPT="deaverage the structures in $TARGET_DIR (out root $ROOT)"
+case "$HARNESS" in
+  claude)
+    export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
+    claude -p "$PROMPT" --permission-mode auto ;;
+  codex)
+    codex exec --approve-for-me --dangerously-bypass-hook-trust "$PROMPT" ;;
+  opencode)
+    opencode run "$PROMPT" ;;                             # permissions come from ./opencode.json
+  *) echo "unknown HARNESS=$HARNESS"; exit 1 ;;
+esac
 
 tools/py tools/batch_log.py "$ROOT/_batch" --summary 2>/dev/null
 

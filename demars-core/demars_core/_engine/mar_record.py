@@ -973,7 +973,7 @@ def build_record(iid, engine, judg, hull=None, evidence=None, review=None,
     # there is no id lookup. A bundle without one (build_record handed a hand-made evidence dict)
     # leaves the field UNAVAILABLE-WITH-A-REASON rather than `null`, which in this schema is what an
     # unrun optional step leaves -- a reader has to be able to tell "computed, came back empty" from
-    # "this build could not compute it". Same distinction CLAUDE.md demands of the sibling search.
+    # "this build could not compute it". Same distinction AGENTS.md demands of the sibling search.
     _src = ev.get('source')
     if not _src:
         disorder_descriptor = {"available": False,

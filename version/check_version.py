@@ -11,22 +11,34 @@ import subprocess
 import sys
 
 
+# One shared skill set (.agents/skills; .claude/skills is a symlink to it) and one instruction file
+# (AGENTS.md; CLAUDE.md is a symlink to it), plus each harness's own agents and version hooks.
 PROTECTED_PATHS = (
     "demars-core",
     "tools",
     "episodes",
+    ".agents/skills",
+    "AGENTS.md",
     ".claude/agents",
     ".claude/skills",
     ".claude/settings.json",
     "CLAUDE.md",
+    ".codex/agents",
+    ".codex/hooks.json",
+    ".opencode/agents",
+    ".opencode/plugins",
+    "opencode.json",
     "assets/demars.yaml.example",
     "assets/setup",
     "version/check_version.py",
     "version/README.md",
     "version/tests",
 )
-STRICT_UNTRACKED_PATHS = (".claude/agents", ".claude/skills")
+STRICT_UNTRACKED_PATHS = (
+    ".agents/skills", ".claude/agents", ".codex/agents", ".opencode/agents", ".opencode/plugins",
+)
 CAMPAIGN_AGENTS = {"mar-analyst", "mar-reviewer"}
+AGENT_TOOL_NAMES = ("Task", "Agent", "spawn_agent", "task")   # Claude Code, Codex, OpenCode
 TAG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
@@ -177,12 +189,18 @@ def gate(root):
         hook = json.load(sys.stdin)
     except (OSError, json.JSONDecodeError, RecursionError) as exc:
         return _blocked(f"malformed hook JSON: {exc}")
-    if not isinstance(hook, dict) or hook.get("tool_name") not in ("Task", "Agent"):
+    if not isinstance(hook, dict) or hook.get("tool_name") not in AGENT_TOOL_NAMES:
         return 0
     tool_input = hook.get("tool_input")
     if not isinstance(tool_input, dict):
         return _blocked("tool_input must be a JSON object")
-    agent = tool_input.get("subagent_type")
+    agent = next(
+        (tool_input.get(key) for key in ("subagent_type", "agent_type", "task_name")
+         if tool_input.get(key) is not None),
+        None,
+    )
+    if agent is not None and not isinstance(agent, str):
+        return _blocked("agent identifier must be a string")
     if agent not in CAMPAIGN_AGENTS:
         return 0
 
@@ -191,7 +209,7 @@ def gate(root):
     except (OSError, json.JSONDecodeError, RecursionError, KeyError, TypeError) as exc:
         return _blocked(f"cannot read version state: {exc}")
 
-    prompt = tool_input.get("prompt")
+    prompt = tool_input.get("prompt", tool_input.get("message"))
     rehearsal = isinstance(prompt, str) and re.search(r"(?m)^VERSION_MODE: rehearsal$", prompt)
     if mode == "frozen" and not rehearsal:
         _, errors, _ = verify(root)
@@ -209,7 +227,7 @@ def gate(root):
 
 
 def _persist_session_state(context, ok):
-    env_file = os.environ.get("CLAUDE_ENV_FILE")
+    env_file = os.environ.get("CLAUDE_ENV_FILE")      # Claude Code only; other harnesses leave it unset
     if not env_file:
         return
     exports = {
@@ -226,7 +244,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("session-start", "verify", "stop", "gate"), nargs="?", default="verify")
     args = parser.parse_args()
-    root = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path(__file__).resolve().parents[1])).resolve()
+    root = os.environ.get("CLAUDE_PROJECT_DIR") or os.environ.get("CODEX_PROJECT_DIR")
+    root = Path(root or Path(__file__).resolve().parents[1]).resolve()
 
     if args.mode == "gate":
         try:

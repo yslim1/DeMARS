@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import sys
 
+import pytest
+
 
 VERSION_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(VERSION_DIR))
@@ -135,26 +137,64 @@ def test_frozen_version_detects_untracked_protected_files(tmp_path):
     assert "tools/new_engine.py" in errors
 
 
-def test_gate_allows_only_explicit_rehearsals_while_mutable(tmp_path, monkeypatch):
+# The campaign-agent launch as each harness's hook hands it over:
+# Claude Code (Agent / subagent_type / prompt), Codex (spawn_agent / agent_type / message),
+# OpenCode (task / subagent_type / prompt, forwarded by .opencode/plugins/demars-version.js).
+LAUNCHES = {
+    "claude": ("Agent", "subagent_type", "prompt"),
+    "codex": ("spawn_agent", "agent_type", "message"),
+    "opencode": ("task", "subagent_type", "prompt"),
+}
+
+
+@pytest.mark.parametrize("harness", sorted(LAUNCHES))
+def test_gate_allows_only_explicit_rehearsals_while_mutable(tmp_path, monkeypatch, harness):
+    tool, agent_key, prompt_key = LAUNCHES[harness]
     write_state(tmp_path, state())
     production = {
-        "tool_name": "Agent",
-        "tool_input": {"subagent_type": "mar-analyst", "prompt": "Run the case"},
+        "tool_name": tool,
+        "tool_input": {agent_key: "mar-analyst", prompt_key: "Run the case"},
     }
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(production)))
     assert check_version.gate(tmp_path) == 2
 
-    production["tool_input"]["prompt"] += "\nVERSION_MODE: rehearsal"
+    production["tool_input"][prompt_key] += "\nVERSION_MODE: rehearsal"
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(production)))
     assert check_version.gate(tmp_path) == 0
 
 
-def test_gate_ignores_unrelated_agents(tmp_path, monkeypatch):
+@pytest.mark.parametrize("harness", sorted(LAUNCHES))
+def test_gate_ignores_unrelated_agents(tmp_path, monkeypatch, harness):
+    tool, agent_key, prompt_key = LAUNCHES[harness]
     write_state(tmp_path, state())
     hook = {
-        "tool_name": "Agent",
-        "tool_input": {"subagent_type": "general-purpose", "prompt": "Inspect docs"},
+        "tool_name": tool,
+        "tool_input": {agent_key: "general-purpose", prompt_key: "Inspect docs"},
     }
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(hook)))
 
     assert check_version.gate(tmp_path) == 0
+
+
+def test_claude_and_codex_hooks_gate_their_agent_tools():
+    root = VERSION_DIR.parent
+    claude = json.loads((root / ".claude" / "settings.json").read_text())["hooks"]["PreToolUse"]
+    codex = json.loads((root / ".codex" / "hooks.json").read_text())["hooks"]["PreToolUse"]
+    for hooks, tool in ((claude, "Agent"), (codex, "spawn_agent")):
+        gated = [h for h in hooks if tool in h["matcher"]]
+        assert gated and "check_version.py\" gate" in gated[0]["hooks"][0]["command"]
+        assert tool in check_version.AGENT_TOOL_NAMES
+
+
+def test_shared_layer_symlinks_point_at_the_one_copy():
+    root = VERSION_DIR.parent
+    assert (root / ".claude" / "skills").resolve() == (root / ".agents" / "skills").resolve()
+    assert (root / "CLAUDE.md").resolve() == (root / "AGENTS.md").resolve()
+
+
+def test_opencode_plugin_gates_the_task_tool():
+    plugin = (VERSION_DIR.parent / ".opencode" / "plugins" / "demars-version.js").read_text()
+
+    assert 'input.tool !== "task"' in plugin
+    assert "check_version.py" in plugin and " gate " in plugin
+    assert "task" in check_version.AGENT_TOOL_NAMES

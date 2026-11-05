@@ -18,6 +18,15 @@ cd "${SLURM_SUBMIT_DIR:-$PWD}" || exit 1
 
 CIF="${1:?usage: sbatch single.j <structure.cif>}"
 
-export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
-
-claude -p "deaverage $CIF" --permission-mode auto
+HARNESS="${HARNESS:-claude}"   # claude | codex | opencode  (sbatch --export=ALL,HARNESS=codex ...)
+PROMPT="deaverage $CIF"
+case "$HARNESS" in
+  claude)
+    export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=7200000   # 120 min; a relaxation outlasts the default
+    claude -p "$PROMPT" --permission-mode auto ;;
+  codex)
+    codex exec --approve-for-me --dangerously-bypass-hook-trust "$PROMPT" ;;
+  opencode)
+    opencode run "$PROMPT" ;;                             # permissions come from ./opencode.json
+  *) echo "unknown HARNESS=$HARNESS"; exit 1 ;;
+esac

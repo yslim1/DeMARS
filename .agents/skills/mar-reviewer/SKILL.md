@@ -1,9 +1,11 @@
 ---
 name: mar-reviewer
-# Background knowledge for the mar-reviewer SUBAGENT, not a slash command. This one matters most:
-# typing /mar-reviewer would run the adversarial review in the SAME context that just built the MAR,
-# which is exactly what "never shares the analyst's context" forbids -- the reviewer would be
-# reviewing its own reasoning. Do NOT use `disable-model-invocation`: it also blocks the preload.
+# Background knowledge for the mar-reviewer agent, not the main conversation. This one matters most:
+# invoking it directly (`/mar-reviewer`, `$mar-reviewer`, or the `skill` tool) would run the
+# adversarial review in the SAME context that just built the MAR, exactly what "never shares the
+# analyst's context" forbids. The pipeline instead launches a fresh project agent `mar-reviewer`,
+# which loads this skill first. `user-invocable: false` hides it from Claude Code's slash menu; do
+# NOT use `disable-model-invocation` instead -- it also blocks preloading into the subagent.
 user-invocable: false
 description: >
   Adversarial reviewer for a finalized MAR record. Given one entry's record (mar-1.0) + its engine
@@ -182,7 +184,7 @@ after a genuine attempt, **confirm** and say what convinced you.
 
 Return it as a **JSON object** — your output is saved to `review.json` and stamped into the
 record's `review` block by stage ⑥, so it outlives this conversation and is read by whoever audits
-the entry. **There is one round** (`CLAUDE.md` §3): your objections are not a work order to a second
+the entry. **There is one round** (`AGENTS.md` §3): your objections are not a work order to a second
 analyst, they are the deliverable a person reads. So `severity` decides how the entry is REPORTED,
 not what runs next — a **blocking** objection lands in `record.review.unresolved_blocking` and means
 the deliverable is not usable as it stands; a **minor** one is recorded and does not. Mark blocking

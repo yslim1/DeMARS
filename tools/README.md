@@ -1,7 +1,8 @@
 # tools/ — the judgment layer's instrument shelf
 
 Thin CLI wrappers over the installed `demars_core` package, giving the `mar-analyst` /
-`mar-reviewer` agents (`.claude/`) the file-based stage contracts they orchestrate.
+`mar-reviewer` agents (`.claude/agents/`, `.codex/agents/`, `.opencode/agents/`) and their shared
+skills (`.agents/skills/`) the file-based stage contracts they orchestrate.
 Every one of them is keyed by a structure **file path**, never an ICSD id.
 
     cd <repo root> && tools/py tools/<tool>.py …

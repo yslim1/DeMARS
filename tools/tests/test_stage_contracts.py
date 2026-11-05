@@ -243,7 +243,7 @@ def test_a_sibling_search_that_ran_is_not_still_recorded_as_not_run():
     """The regression: the CLI overwrote the VALUE from an outer lookup and left the inner
     provenance in place, so one file claimed the search both happened and never ran. `not_run`
     means UNCHECKED -- reporting it next to a checked-and-absent string is the confusion
-    CLAUDE.md exists to prevent."""
+    AGENTS.md exists to prevent."""
     from demars_engine import _stamp_sibling
 
     ej = _stamp_sibling(_ej_from_the_inner_run(), {

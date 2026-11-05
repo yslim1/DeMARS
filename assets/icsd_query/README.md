@@ -82,7 +82,7 @@ that one directory. The zip is not optional for DeMARS: the sibling search reads
 to check whether their site tables are fully ordered.
 
 ⚠️ **Anything importing `demars_core` must `import _icsd_env` first**, or the sibling bootstrap
-silently degrades. See `CLAUDE.md` 「Facts that bite」.
+silently degrades. See `AGENTS.md` 「Facts that bite」.
 
 ⚠️ **Leaving `icsd_db` unset is a supported, honest configuration** — the record then reports
 `"none (no sibling DB configured)"`, which means **unchecked**. That is a different claim from

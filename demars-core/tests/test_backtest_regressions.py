@@ -273,7 +273,7 @@ def test_basis_survives_so_downstream_does_not_break():
 
 
 def test_sibling_reports_not_run_rather_than_absent():
-    """CLAUDE.md: "no sibling DB configured" means UNCHECKED and must never read as "none exists"."""
+    """AGENTS.md: "no sibling DB configured" means UNCHECKED and must never read as "none exists"."""
     txt = open(os.path.join(FIXDIR, 'cod_1544358.cif')).read()
     ev = MEV.evidence_from_text(txt, iid=None, search_siblings=False)
     p = ev['ordered_sibling_provenance']

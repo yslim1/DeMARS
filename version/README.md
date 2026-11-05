@@ -10,7 +10,8 @@ A release tag identifies the protected snapshot for each frozen version.
 - `frozen`: the current release tag must exist, protected tracked files must match that tag, and no
   untracked protected file may be present. Production runs are allowed.
 
-The hooks in `.claude/settings.json` verify the state at session start, before campaign-agent spawns,
+Each harness's hooks — `.claude/settings.json` (Claude Code), `.codex/hooks.json` (Codex),
+`.opencode/plugins/demars-version.js` (OpenCode) — verify the state at session start, before campaign-agent launches,
 and when a session stops. They report inconsistencies but never modify or repair files.
 
 ## Open a frozen version

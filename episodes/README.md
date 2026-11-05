@@ -20,7 +20,7 @@ episodes["E-cell-length-cutoff"] = {
 **`lesson` is what you apply. `provenance` is not.** It records which entries the lesson was measured
 on, so the de-identified wording in the skills and engine comments can be audited against what it
 actually stood for. Reasoning from a past entry's answer instead of the evidence in front of you is
-the contamination this project exists to avoid — see `CLAUDE.md`, *name the chemistry, not the entry*.
+the contamination this project exists to avoid — see `AGENTS.md`, *name the chemistry, not the entry*.
 
 Two flags on a provenance block are worth reading:
 

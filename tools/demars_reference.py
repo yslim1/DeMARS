@@ -38,7 +38,7 @@ REFDIR = os.path.join(ROOT, 'reference')
 FIXDIR = os.path.join(ROOT, 'demars-core', 'tests', 'fixtures')
 
 # Deliberately small: a self-check a newcomer will actually wait for (minutes on CPU), not a
-# production run. Production settings are --nr 30 --min-nm 1.5 --final; see CLAUDE.md.
+# production run. Production settings are --nr 30 --min-nm 1.5 --final; see AGENTS.md.
 SETTINGS = dict(n_samples=6, min_cell=8.0, max_rounds=1, final=False)
 
 E_TOL_MEV = 20.0        # per atom. Wide: it separates "wrong weights" from hardware noise.
