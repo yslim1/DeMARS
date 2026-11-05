@@ -11,7 +11,8 @@
         "Shared judgment layer: the skills live once in .agents/skills (read by Codex and OpenCode; .claude/skills is a symlink to it) and the instructions once in AGENTS.md (CLAUDE.md is a symlink to it). Each harness keeps only its own agent definitions (.claude/agents, .codex/agents, .opencode/agents) and version hooks (.claude/settings.json, .codex/hooks.json, .opencode/plugins).",
         "Version gate: check_version.py protects every harness's agents, hooks and the shared layer, and recognises the campaign-agent launch of all three (Agent/subagent_type, spawn_agent/agent_type, task/subagent_type); tests cover each.",
         "SLURM templates choose the harness with HARNESS=claude|codex|opencode (default claude).",
-        "Tag note: the v0.1.1 tag predates main's 0.1.1 entry and names the Codex-port snapshot (4cc973f); main's 0.1.1 state (88d3f2a) was never tagged. Existing tags are left unmoved."
+        "Tag note: the v0.1.1 tag predates main's 0.1.1 entry and names the Codex-port snapshot (4cc973f); main's 0.1.1 state (88d3f2a) was never tagged. Existing tags are left unmoved.",
+        "OpenCode: opencode.json sets \"snapshot\": false. OpenCode's per-step undo snapshot hashes the whole worktree into a shadow git store; on an NFS-hosted checkout one step took over 16 minutes and stalled the rehearsal. DeMARS does not use OpenCode's undo, so nothing it records changes."
       ],
       "known_limits": [
         "gates.hull needs a Materials Project API key; without it the gate stays not_run (unchecked).",
