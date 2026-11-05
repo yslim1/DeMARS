@@ -18,7 +18,7 @@
         "The ordered-sibling search needs a user-built local ICSD index (assets/icsd_query); no ICSD data ships.",
         "hull.tol_eV_per_atom has no default, so gates.hull reports E_above_hull with pass: null until a threshold is configured.",
         "The frozen-state check requires a git clone with the release tag; a source zip without .git cannot run the judgment layer.",
-        "Per-harness model pins differ: Claude Code agents run claude-sonnet-5 (effort high), Codex and OpenCode agents gpt-5.6-terra (effort medium). A cross-harness comparison must report the model with the harness.",
+        "Per-harness model pins differ, each at its vendor default reasoning effort: Claude Code agents run claude-sonnet-5 at effort high (the Anthropic API default), Codex and OpenCode agents run gpt-5.6-terra at effort medium (the Codex model-catalog default). A cross-harness comparison compares model+harness pairs at vendor defaults, not equal reasoning budgets; report both with the harness.",
         "The three agent definitions repeat the same corpus-integrity text; an edit to one must be copied to the other two."
       ]
     },
